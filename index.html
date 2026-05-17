@@ -3,277 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RuneScript - Terminal Interativo</title>
+    <title>RuneScript — Core Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
+        :root {
+            --bg-black: #030303;
+            --bg-card: #09090b;
+            --bg-sidebar: #060608;
+            --bg-terminal: #0c0c0e;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --accent-purple: #7c3aed;
+            --accent-cyan: #06b6d4;
+            --text-main: #fafafa;
+            --text-muted: #71717a;
+        }
+
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
-            background-color: #06060c;
-            color: #d1d1f6;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            position: relative;
-        }
-
-        .terminal-container {
-            width: 100%;
-            max-width: 850px;
-            background-color: #0a0a14;
-            border: 2px solid #3b3bc4;
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(157, 78, 221, 0.2);
-            overflow: hidden;
-            cursor: text;
-            margin-bottom: 40px; /* Espaço para não cobrir o botão no mobile */
-        }
-
-        /* Barra superior */
-        .terminal-header {
-            background-color: #121226;
-            padding: 10px 15px;
             display: flex;
-            align-items: center;
-            border-bottom: 1px solid #222244;
-            user-select: none;
+            overflow-x: hidden;
         }
 
-        .terminal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-right: 15px;
+        /* Efeito Glow Roxo de Fundo (Estilo Lofypay) */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, rgba(0,0,0,0) 70%);
+            top: -100px;
+            right: -100px;
+            z-index: 0;
         }
 
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-        .dot.red { background-color: #ff5f56; }
-        .dot.yellow { background-color: #ffbd2e; }
-        .dot.green { background-color: #27c93f; }
-
-        .terminal-title {
-            color: #7979aa;
-            font-size: 13px;
-            flex-grow: 1;
-            text-align: center;
-            margin-right: 50px;
-        }
-
-        /* Conteúdo */
-        .terminal-body {
-            padding: 25px;
-            line-height: 1.6;
-        }
-
-        .brand-section {
+        /* 1. BARRA LATERAL (SIDEBAR) */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 1px dashed #222244;
-            padding-bottom: 25px;
-            user-select: none;
+            padding: 24px 16px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 10;
         }
 
-        .brand-logo {
-            width: 120px;
-            height: auto;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 0 15px rgba(59, 59, 196, 0.6));
-        }
-
-        .brand-name {
-            font-size: 28px;
-            font-weight: bold;
-            color: #ffffff;
-            margin: 0;
-            letter-spacing: 1px;
-        }
-
-        .brand-slogan {
-            font-size: 12px;
-            color: #00d2ff;
-            letter-spacing: 3px;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
-        /* Linhas do Terminal */
-        .line {
-            margin-bottom: 8px;
-            font-size: 15px;
-            word-break: break-all;
-        }
-
-        .prompt {
-            color: #00f0ff;
-            font-weight: bold;
-            user-select: none;
-        }
-
-        .command {
-            color: #9d4edd;
-            font-weight: bold;
-        }
-
-        .output {
-            color: #b5b5e6;
-            margin-left: 15px;
-            margin-bottom: 15px;
-        }
-
-        /* Grid de Features interno */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin: 15px 0 15px 15px;
-        }
-
-        .feature-card {
-            background-color: #0d0d1f;
-            border-left: 3px solid #9d4edd;
-            padding: 12px;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .feature-title {
-            color: #00f0ff;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .feature-desc {
-            font-size: 14px;
-            color: #a0a0cf;
-        }
-
-        /* Input Ativo */
-        .input-line {
+        .sidebar-logo {
             display: flex;
             align-items: center;
-            margin-top: 15px;
+            gap: 12px;
+            margin-bottom: 36px;
+            padding: 0 12px;
         }
 
-        #terminal-input {
-            background: transparent;
-            border: none;
-            color: #9d4edd;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            font-weight: bold;
-            flex-grow: 1;
-            outline: none;
-            margin-left: 8px;
-            padding: 0;
+        .sidebar-logo img {
+            width: 32px;
+            height: auto;
+            filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.6));
         }
 
-        .discord-link {
-            color: #5865F2;
-            text-decoration: underline;
-            font-weight: bold;
+        .sidebar-logo span {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Botão Fixo do Discord no Canto */
-        .floating-discord-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #5865F2;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-weight: bold;
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
             font-size: 14px;
+            font-weight: 500;
+            padding: 10px 14px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active {
+            background-color: rgba(124, 58, 237, 0.1);
+            color: var(--text-main);
+            border: 1px solid rgba(124, 58, 237, 0.15);
+        }
+
+        .nav-item:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .user-badge {
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
-            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
-            z-index: 1000;
+            font-size: 13px;
         }
 
-        .floating-discord-btn:hover {
-            background-color: #4752c4;
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 6px 25px rgba(88, 101, 242, 0.6);
+        .user-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
         }
 
-        .discord-icon {
-            width: 20px;
-            height: 20px;
-            fill: #ffffff;
+        /* 2. ÁREA DE CONTEÚDO PRINCIPAL */
+        .main-content {
+            margin-left: 260px;
+            flex-grow: 1;
+            padding: 40px;
+            max-width: 1200px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Topbar / Header */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .discord-btn {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .discord-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+        }
+
+        /* Layout Grid do Dashboard */
+        .dashboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Grid de Cards Analíticos */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #10b981;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Layout Dividido (Editor + Lista) */
+        .columns-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .columns-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sandbox / Terminal (Igual à Lofypay Interface) */
+        .panel-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background-color: rgba(255, 255, 255, 0.01);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Sandbox Terminal Real */
+        .terminal-body {
+            background-color: var(--bg-terminal);
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 250px;
+        }
+
+        .line { margin-bottom: 6px; word-break: break-all; }
+        .prompt { color: var(--accent-purple); font-weight: bold; }
+        .command { color: var(--text-main); }
+        .output { color: var(--text-muted); margin-left: 10px; margin-bottom: 10px; }
+
+        .input-line { display: flex; align-items: center; margin-top: 10px; }
+        #terminal-input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            flex-grow: 1;
+            outline: none;
+            margin-left: 6px;
+        }
+
+        /* Tabela estilo App Lofypay */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        td {
+            padding: 14px 20px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: #e4e4e7;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 99px;
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .discord-inline-link {
+            color: #5865F2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .discord-inline-link:hover { text-decoration: underline; }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="floating-discord-btn">
-        <svg class="discord-icon" viewBox="0 0 127.14 96.36">
-            <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a74.37,74.37,0,0,0,6.71-11,68.6,68.6,0,0,1-10.64-5.12c.91-.66,1.8-1.34,2.65-2a75.58,75.58,0,0,0,72.76,0c.85.69,1.74,1.37,2.65,2a68.44,68.44,0,0,1-10.64,5.12,74.74,74.74,0,0,0,6.71,11,105.73,105.73,0,0,0,31.57-18.83C129.54,50.93,123.63,28.1,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.87,46,53.66,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.11,46,95.9,53,91,65.69,84.69,65.69Z"/>
-        </svg>
-        Discord Oficial
-    </a>
-
-    <div class="terminal-container" id="terminal">
-        <div class="terminal-header">
-            <div class="terminal-buttons">
-                <div class="dot red"></div>
-                <div class="dot yellow"></div>
-                <div class="dot green"></div>
-            </div>
-            <div class="terminal-title">runescript@core: ~</div>
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="1000609185.png" alt="RuneScript">
+            <span>RuneScript</span>
         </div>
-
-        <div class="terminal-body">
-            <div class="brand-section">
-                <img src="1000609185.png" alt="RuneScript Logo" class="brand-logo">
-                <h1 class="brand-name">RuneScript</h1>
-                <div class="brand-slogan">Escreva. Execute. Automatize.</div>
-            </div>
-
-            <div id="terminal-history">
-                <div class="line">
-                    <span class="prompt">runescript ></span> <span class="command">info</span>
-                </div>
-                <div class="line output">
-                    Uma linguagem poderosa e intuitiva feita para automação, bots e muito mais.
-                </div>
-                <div class="line">
-                    <span class="prompt">runescript ></span> <span class="command">help</span>
-                </div>
-                <div class="line output">
-                    Comandos disponíveis: <span style="color:#00f0ff">help</span>, <span style="color:#00f0ff">info</span>, <span style="color:#00f0ff">features</span>, <span style="color:#00f0ff">discord</span>, <span style="color:#00f0ff">clear</span>
-                </div>
-            </div>
-
-            <div class="input-line">
-                <span class="prompt">runescript ></span>
-                <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
+        <nav class="nav-group">
+            <a href="#" class="nav-item active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-code"></i> Meus Scripts</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-bolt"></i> Automações</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-layer-group"></i> Extensões</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-book"></i> Documentação</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-badge">
+                <div class="user-dot"></div>
+                <span>Ambiente: Beta-Core</span>
             </div>
         </div>
-    </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <header class="content-header">
+            <div class="header-title">
+                <h1>Painel de Controle</h1>
+                <p>Monitore, desenvolva e publique scripts de automação de elite.</p>
+            </div>
+            <a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="discord-btn">
+                <i class="fa-brands fa-discord"></i> Entrar no Discord
+            </a>
+        </header>
+
+        <div class="dashboard-grid">
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Compilador JIT</div>
+                    <div class="stat-value">Ativo v1.0</div>
+                    <div class="stat-sub"><i class="fa-solid fa-circle-check"></i> Pronto para uso</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Requisições Globais</div>
+                    <div class="stat-value">1.2M/dia</div>
+                    <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> +14.2% esta semana</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Latência Média</div>
+                    <div class="stat-value">14ms</div>
+                    <div class="stat-sub" style="color: var(--accent-cyan)"><i class="fa-solid fa-bolt"></i> Desempenho Máximo</div>
+                </div>
+            </div>
+
+            <div class="columns-layout">
+                
+                <div class="panel-box">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="fa-solid fa-terminal" style="color: var(--accent-purple)"></i> Rune Sandbox Interativo</div>
+                        <span style="font-size: 11px; color: var(--text-muted)">main.runes</span>
+                    </div>
+                    <div class="terminal-body" id="terminal">
+                        <div id="terminal-history">
+                            <div class="line">
+                                <span class="prompt">runescript ~</span> <span class="command">help</span>
+                            </div>
+                            <div class="line output">
+                                Comandos disponíveis na Sandbox de divulgação:<br>
+                                - <span style="color: var(--accent-cyan)">info</span>: Descrição do ecossistema.<br>
+                                - <span style="color: var(--accent-cyan)">features</span>: Diferenciais da linguagem.<br>
+                                - <span style="color: var(--accent-cyan)">discord</span>: Obter link da comunidade real.<br>
+                                - <span style="color: var(--accent-cyan)">clear</span>: Limpar histórico.
+                            </div>
+                        </div>
+                        <div class="input-line">
+                            <span class="prompt">runescript ~</span>
+                            <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-box">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="fa-solid fa-list-check"></i> Módulos do Sistema</div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Módulo</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>discord_bot_core.runes</td>
+                                    <td><span class="status-pill">Online</span></td>
+                                </tr>
+                                <tr>
+                                    <td>http_router.runes</td>
+                                    <td><span class="status-pill">Online</span></td>
+                                </tr>
+                                <tr>
+                                    <td>task_scheduler.runes</td>
+                                    <td><span class="status-pill">Online</span></td>
+                                </tr>
+                                <tr>
+                                    <td>security_shield.runes</td>
+                                    <td><span class="status-pill">Online</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div> </div>
+    </main>
 
     <script>
         const inputEl = document.getElementById('terminal-input');
         const historyEl = document.getElementById('terminal-history');
         const terminalContainer = document.getElementById('terminal');
 
-        // Mantém o foco no input
-        terminalContainer.addEventListener('click', () => {
-            inputEl.focus();
-        });
+        terminalContainer.addEventListener('click', () => inputEl.focus());
 
         inputEl.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -282,50 +492,36 @@
                 
                 if (rawInput.trim() === '') return;
 
-                // Replica comando no histórico
                 const cmdLine = document.createElement('div');
                 cmdLine.className = 'line';
-                cmdLine.innerHTML = `<span class="prompt">runescript ></span> <span class="command">${rawInput}</span>`;
+                cmdLine.innerHTML = `<span class="prompt">runescript ~</span> <span class="command">${rawInput}</span>`;
                 historyEl.appendChild(cmdLine);
 
                 let outputHTML = '';
 
                 switch(command) {
                     case 'help':
-                    case 'ajuda':
                         outputHTML = `Comandos disponíveis:<br>
-                        - <strong style="color:#00f0ff">info</strong>: Sobre a linguagem.<br>
-                        - <strong style="color:#00f0ff">features</strong>: Vantagens da RuneScript.<br>
-                        - <strong style="color:#00f0ff">discord</strong>: Link direto para a comunidade oficial.<br>
-                        - <strong style="color:#00f0ff">clear</strong>: Limpa o histórico do terminal.`;
+                        - <strong style="color:var(--accent-cyan)">info</strong>: Descrição do ecossistema.<br>
+                        - <strong style="color:var(--accent-cyan)">features</strong>: Diferenciais da linguagem.<br>
+                        - <strong style="color:var(--accent-cyan)">discord</strong>: Obter link da comunidade real.<br>
+                        - <strong style="color:var(--accent-cyan)">clear</strong>: Limpar histórico.`;
                         break;
-                        
                     case 'info':
-                        outputHTML = 'Uma linguagem poderosa e intuitiva feita para automação, bots e muito mais.';
+                        outputHTML = 'RuneScript é uma linguagem de programação moderna, ultra-veloz, focada em automações robustas e bots assíncronos.';
                         break;
-                        
                     case 'features':
-                        outputHTML = `
-                        <div class="features-grid">
-                            <div class="feature-card"><div class="feature-title">[⚡] SINTAXE LIMPA</div><div class="feature-desc">Fácil de aprender, rápida de escrever.</div></div>
-                            <div class="feature-card"><div class="feature-title">[📦] FLEXÍVEL</div><div class="feature-desc">Crie do seu jeito. Do simples ao avançado.</div></div>
-                            <div class="feature-card"><div class="feature-title">[🧩] EXTENSÍVEL</div><div class="feature-desc">Plugins, módulos e bibliotecas.</div></div>
-                            <div class="feature-card"><div class="feature-title">[👥] COMUNIDADE</div><div class="feature-desc">Feita por devs, para devs.</div></div>
-                        </div>`;
+                        outputHTML = 'Sintaxe limpa inspirada em TypeScript/Go, Compilação JIT nativa, Gestão modular de dependências e consumo mínimo de memória.';
                         break;
-                        
                     case 'discord':
-                        outputHTML = `>> Entre na comunidade oficial no Discord para testar o compilador real: <br>
-                        <a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="discord-link">https://discord.gg/8HUWVdDwkc</a>`;
+                        outputHTML = `O compilador e os testes reais funcionam na nossa comunidade. Entre aqui: <br><a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="discord-inline-link">https://discord.gg/8HUWVdDwkc</a>`;
                         break;
-                        
                     case 'clear':
                     case 'cls':
                         historyEl.innerHTML = '';
                         break;
-                        
                     default:
-                        outputHTML = `<span style="color: #ff5f56;">Comando "${rawInput}" não reconhecido. Digite "help" para listar os comandos válidos.</span>`;
+                        outputHTML = `<span style="color: #ef4444;">Comando não reconhecido. Digite "help" para ver as opções.</span>`;
                 }
 
                 if (outputHTML) {
@@ -336,7 +532,7 @@
                 }
 
                 this.value = '';
-                window.scrollTo(0, document.body.scrollHeight);
+                terminalContainer.scrollTop = terminalContainer.scrollHeight;
             }
         });
     </script>
