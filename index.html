@@ -1,540 +1,2424 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RuneScript — Core Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <style>
-        :root {
-            --bg-black: #030303;
-            --bg-card: #09090b;
-            --bg-sidebar: #060608;
-            --bg-terminal: #0c0c0e;
-            --border-subtle: rgba(255, 255, 255, 0.06);
-            --accent-purple: #7c3aed;
-            --accent-cyan: #06b6d4;
-            --text-main: #fafafa;
-            --text-muted: #71717a;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataGov · OSINT Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --bg:#0a0d14; --sb-bg:#0c1018; --sb-w:230px; --top-h:58px;
+  --surf:#111827; --surf2:#0c1018; --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.13);
+  --cyan:#22d3ee; --cyan2:#06b6d4; --cyan3:#0e7490;
+  --cyan-bg:rgba(34,211,238,.08); --cyan-lt:rgba(34,211,238,.14);
+  --text:#e2e8f0; --text2:#94a3b8; --text3:#475569;
+  --green:#4ade80; --green-bg:rgba(74,222,128,.08);
+  --yellow:#fbbf24; --yellow-bg:rgba(251,191,36,.08);
+  --blue:#60a5fa; --blue-bg:rgba(96,165,250,.08);
+  --purple:#c084fc; --purple-bg:rgba(192,132,252,.08);
+  --orange:#fb923c; --orange-bg:rgba(251,146,60,.08);
+  --red:#f87171; --red-bg:rgba(248,113,113,.08);
+  --r:12px; --r2:8px; --r3:6px;
+  --sh:0 4px 24px rgba(0,0,0,.6); --sh-lg:0 12px 48px rgba(0,0,0,.8);
+  --sh-glow:0 0 24px rgba(34,211,238,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;font-size:14px}
+button{cursor:pointer;font-family:inherit;transition:all .18s;border:none}
+input,select{font-family:inherit}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.hidden{display:none!important}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            background-color: var(--bg-black);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            overflow-x: hidden;
-        }
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes pop{0%{transform:scale(.94);opacity:0}60%{transform:scale(1.02)}100%{transform:scale(1);opacity:1}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
 
-        /* Efeito Glow Roxo de Fundo (Estilo Lofypay) */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, rgba(0,0,0,0) 70%);
-            top: -100px;
-            right: -100px;
-            z-index: 0;
-        }
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.screen{position:fixed;inset:0;z-index:10;display:flex;animation:fadeIn .3s ease}
+.screen.centered{align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 25% 35%,rgba(6,182,212,.07) 0%,transparent 55%),
+             radial-gradient(ellipse at 80% 75%,rgba(34,211,238,.04) 0%,transparent 50%),var(--bg);
+  padding:24px}
+.screen.centered::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(34,211,238,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.02) 1px,transparent 1px);
+  background-size:44px 44px}
 
-        /* 1. BARRA LATERAL (SIDEBAR) */
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-subtle);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 16px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 10;
-        }
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sb-w);min-width:var(--sb-w);flex-shrink:0;background:var(--sb-bg);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  height:100vh;overflow-y:auto;z-index:40;position:relative}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:18px 16px 15px;border-bottom:1px solid var(--border)}
+.sb-logo-mark{width:36px;height:36px;flex-shrink:0;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;
+  box-shadow:0 3px 12px rgba(6,182,212,.35)}
+.sb-logo-word{font-size:16px;font-weight:900;letter-spacing:-.04em;color:var(--text)}
+.sb-logo-word span{color:var(--cyan)}
+.sb-logo-sub{font-size:9.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:-2px}
+.sb-label{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:14px 16px 5px}
+.sb-nav{padding:0 8px;flex:1}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r2);
+  font-size:13px;font-weight:500;color:var(--text2);margin-bottom:1px;background:none;width:100%;text-align:left}
+.sb-item i{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.sb-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.sb-item.active{background:var(--cyan-lt);color:var(--cyan);font-weight:600}
+.sb-item.active i{color:var(--cyan)}
+.sb-footer{padding:10px;border-top:1px solid var(--border);margin-top:auto}
+.sb-user{display:flex;align-items:center;gap:9px;padding:9px 10px;
+  background:rgba(255,255,255,.04);border-radius:var(--r2);border:1px solid var(--border)}
+.sb-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.sb-username{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-userplan{font-size:10px;color:var(--text3);margin-top:1px}
 
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 36px;
-            padding: 0 12px;
-        }
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:var(--top-h);background:var(--sb-bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;flex-shrink:0;z-index:30}
+.topbar-l{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text)}
+.topbar-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.topbar-r{display:flex;align-items:center;gap:8px}
+.btn-icon{width:34px;height:34px;border-radius:var(--r2);border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:13px}
+.btn-icon:hover{background:rgba(255,255,255,.09);color:var(--text)}
+.btn-menu{display:none}
+.chip{font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:20px;text-transform:uppercase}
+.chip-bronze{background:rgba(146,64,14,.2);color:#fcd34d;border:1px solid rgba(146,64,14,.4)}
+.chip-gold{background:rgba(161,98,7,.15);color:#fbbf24;border:1px solid rgba(161,98,7,.4)}
+.chip-diamond{background:rgba(124,58,237,.15);color:#c084fc;border:1px solid rgba(124,58,237,.4)}
+.chip-admin{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.3)}
+.btn-logout{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r2);
+  border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text2);font-size:12px;font-weight:500}
+.btn-logout:hover{background:var(--red-bg);color:var(--red);border-color:rgba(248,113,113,.3)}
 
-        .sidebar-logo img {
-            width: 32px;
-            height: auto;
-            filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.6));
-        }
+/* ── PAGE CONTENT ── */
+.page-content{flex:1;overflow-y:auto;padding:28px 32px 60px;position:relative}
 
-        .sidebar-logo span {
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #fff, #a1a1aa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+/* ── ALERTS & TOAST ── */
+.alert{padding:10px 14px;border-radius:var(--r2);font-size:13px;display:flex;align-items:center;gap:8px;margin-top:10px}
+.alert-error{background:var(--red-bg);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+.alert-success{background:var(--green-bg);border:1px solid rgba(74,222,128,.25);color:var(--green)}
+.alert-info{background:var(--cyan-bg);border:1px solid rgba(34,211,238,.25);color:var(--cyan)}
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{min-width:250px;max-width:330px;padding:11px 15px;border-radius:var(--r2);
+  background:var(--surf);border:1px solid var(--border2);box-shadow:var(--sh-lg);
+  display:flex;align-items:center;gap:8px;font-size:13px;animation:pop .25s ease;color:var(--text)}
+.toast.success i{color:var(--green)}
+.toast.error i{color:var(--red)}
+.toast.info i{color:var(--cyan)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
 
-        .nav-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+/* ── LOGIN ── */
+.login-card{width:100%;max-width:420px;background:var(--surf);border:1px solid var(--border2);
+  border-radius:var(--r);padding:40px 36px;box-shadow:var(--sh-lg),var(--sh-glow);animation:pop .35s ease;position:relative;z-index:1}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);border-radius:var(--r) var(--r) 0 0}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.login-logo-icon{width:44px;height:44px;border-radius:10px;
+  background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;
+  box-shadow:0 4px 16px rgba(6,182,212,.4)}
+.login-logo-text{font-size:23px;font-weight:900;letter-spacing:-.04em;color:var(--text)}
+.login-logo-text span{color:var(--cyan)}
+.login-tagline{font-size:11px;color:var(--text3);margin-bottom:26px;font-family:'JetBrains Mono',monospace}
+.login-tagline strong{color:var(--green)}
+.form-group{margin-bottom:14px}
+label{display:block;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.inp-wrap{position:relative}
+.inp-wrap i.inp-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+.inp-wrap input{padding-left:36px}
+input,select{background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--r2);padding:10px 14px;width:100%;font-size:14px;transition:all .18s;outline:none}
+input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.1);background:rgba(34,211,238,.03)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--surf);color:var(--text)}
+.btn-primary{width:100%;padding:12px;border-radius:var(--r2);
+  background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:14px;font-weight:700;margin-top:4px;
+  box-shadow:0 4px 16px rgba(6,182,212,.35);position:relative;overflow:hidden;letter-spacing:.03em}
+.btn-primary::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}
+.btn-primary:hover::after{background:rgba(255,255,255,.08)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.login-legal{display:flex;align-items:flex-start;gap:8px;margin-top:16px;padding:10px 12px;
+  background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.18);border-radius:var(--r3);
+  font-size:11px;color:var(--text3);line-height:1.5}
+.login-legal i{color:var(--green);margin-top:1px;flex-shrink:0}
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 500;
-            padding: 10px 14px;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
+/* ── PIN MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);
+  padding:32px 28px;width:100%;max-width:340px;box-shadow:var(--sh-lg),var(--sh-glow);animation:pop .25s ease;text-align:center}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin-bottom:18px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--border2);transition:all .15s}
+.pin-dot.filled{background:var(--cyan);border-color:var(--cyan);transform:scale(1.15);box-shadow:0 0 8px rgba(34,211,238,.5)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-key{padding:13px;border-radius:var(--r2);border:1px solid var(--border2);
+  background:rgba(255,255,255,.04);color:var(--text);font-size:17px;font-weight:700}
+.pin-key:hover{background:var(--cyan-bg);color:var(--cyan);border-color:rgba(34,211,238,.3)}
+.pin-key.del{color:var(--red);font-size:14px}
+.pin-stage{font-size:11px;color:var(--text3);min-height:16px;margin-bottom:8px;font-family:'JetBrains Mono',monospace}
 
-        .nav-item.active {
-            background-color: rgba(124, 58, 237, 0.1);
-            color: var(--text-main);
-            border: 1px solid rgba(124, 58, 237, 0.15);
-        }
+/* ── MODULE CARDS GRID (visible on dashboard) ── */
+.modules-section{margin-top:24px}
+.modules-section-title{font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modules-section-title i{color:var(--cyan)}
+.mod-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.mod-card{border-radius:var(--r);overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s;position:relative;border:1px solid var(--border)}
+.mod-card:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.5);border-color:var(--border2)}
+.mod-card.locked{opacity:.55;cursor:not-allowed}
+.mod-card.locked:hover{transform:none;box-shadow:none}
+.mod-card-banner{height:100px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.mod-card-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55) 0%,transparent 60%)}
+.mod-card-banner-icon{font-size:36px;color:rgba(255,255,255,.85);position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+.mod-card-body{background:var(--surf);padding:12px 14px 14px}
+.mod-card-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px}
+.mod-card-desc{font-size:11px;color:var(--text3);line-height:1.45;margin-bottom:10px}
+.mod-card-footer{display:flex;align-items:center;justify-content:space-between}
+.mod-card-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
+.mod-card-badge.mais-utilizado{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.3)}
+.mod-card-badge.locked-badge{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.mod-card-credits{font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:4px}
+.mod-card-credits i{font-size:10px;color:var(--green)}
+.mod-card-progress{height:3px;background:rgba(74,222,128,.15);border-radius:2px;margin-top:8px;overflow:hidden}
+.mod-card-progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
 
-        .nav-item:hover:not(.active) {
-            background-color: rgba(255, 255, 255, 0.03);
-            color: var(--text-main);
-        }
+/* ── MODULE SEARCH MODAL ── */
+.mod-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+.mod-modal-overlay.open{opacity:1;pointer-events:all}
+.mod-modal{background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);
+  width:100%;max-width:480px;box-shadow:var(--sh-lg),var(--sh-glow);
+  overflow:hidden;transform:scale(.95) translateY(10px);transition:transform .22s,opacity .22s;opacity:0}
+.mod-modal-overlay.open .mod-modal{transform:scale(1) translateY(0);opacity:1}
+.mod-modal-top{height:90px;display:flex;align-items:flex-end;padding:16px 20px 14px;position:relative;overflow:hidden}
+.mod-modal-top::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 60%)}
+.mod-modal-top-icon{font-size:26px;color:rgba(255,255,255,.9);position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));margin-right:12px}
+.mod-modal-top-name{font-size:18px;font-weight:900;color:#fff;position:relative;z-index:1;letter-spacing:-.02em}
+.mod-modal-top-sub{font-size:11px;color:rgba(255,255,255,.6);position:relative;z-index:1;font-family:'JetBrains Mono',monospace}
+.mod-modal-top-close{position:absolute;top:12px;right:12px;z-index:2;width:28px;height:28px;border-radius:6px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:12px}
+.mod-modal-top-close:hover{background:rgba(0,0,0,.5);color:#fff}
+.mod-modal-body{padding:20px 22px 24px}
+.mod-modal-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mod-modal-label i{color:var(--cyan)}
+.mod-modal-inp-row{display:flex;gap:8px;margin-bottom:8px}
+.mod-modal-inp-row input{flex:1;padding:12px 16px;font-size:14px;border-radius:var(--r2)}
+.btn-modal-consult{padding:12px 22px;border-radius:var(--r2);background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:14px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:7px;
+  box-shadow:0 3px 14px rgba(6,182,212,.4);letter-spacing:.03em}
+.btn-modal-consult:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(6,182,212,.5)}
+.btn-modal-consult:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.mod-modal-hint{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.mod-modal-locked{padding:20px 22px 24px;text-align:center}
+.mod-modal-locked i{font-size:32px;color:var(--red);display:block;margin-bottom:10px}
+.mod-modal-locked-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px}
+.mod-modal-locked-sub{font-size:12px;color:var(--text2);margin-bottom:16px}
 
-        .sidebar-footer {
-            margin-top: auto;
-            padding: 12px;
-            border-top: 1px solid var(--border-subtle);
-        }
+/* ── old overlay kept for compat ── */
+.mod-overlay{display:none!important}
+.mod-plan-badge{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
 
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-        }
+/* ── DASHBOARD HOME ── */
+.dash-home{animation:fadeIn .3s ease}
+.welcome-banner{padding:20px 24px;background:var(--surf);border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:24px;border-left:3px solid var(--cyan);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.welcome-text-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:3px}
+.welcome-text-sub{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.plan-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;
+  border-radius:var(--r2);border:1px solid var(--border2);background:rgba(255,255,255,.04)}
+.plan-pill-icon{font-size:20px}
+.plan-pill-name{font-size:13px;font-weight:700;color:var(--text)}
+.plan-pill-feat{font-size:11px;color:var(--text3);margin-top:1px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.stat-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.stat-val{font-size:26px;font-weight:900;color:var(--cyan)}
+.stat-val.warn{color:var(--yellow)}
+.stat-val.danger{color:var(--red)}
+.start-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;
+  border-radius:var(--r2);background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:15px;font-weight:700;letter-spacing:.03em;
+  box-shadow:0 4px 20px rgba(6,182,212,.4)}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(6,182,212,.5)}
+.start-btn i{font-size:18px}
 
-        .user-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #10b981;
-        }
+/* ── CONSULTATION VIEW ── */
+.consult-view{animation:fadeIn .28s ease}
+.consult-header{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.back-btn{width:34px;height:34px;border-radius:var(--r2);background:rgba(255,255,255,.05);
+  border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.back-btn:hover{background:rgba(255,255,255,.09);color:var(--text)}
+.consult-mod-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.consult-title{font-size:17px;font-weight:800;color:var(--text)}
+.consult-subtitle{font-size:12px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.consult-box{background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);
+  padding:20px 22px;margin-bottom:20px;position:relative;overflow:hidden}
+.consult-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.search-row{display:flex;gap:10px}
+.search-row input{flex:1;padding:11px 16px;font-size:14.5px;border-radius:var(--r2)}
+.btn-consult{padding:11px 26px;border-radius:var(--r2);background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:14px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:7px;
+  box-shadow:0 3px 14px rgba(6,182,212,.4);letter-spacing:.03em}
+.btn-consult:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(6,182,212,.5)}
+.btn-consult:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.consult-hint{font-size:12px;color:var(--text3);margin-top:7px;font-family:'JetBrains Mono',monospace}
+.loading-bar{height:2px;background:linear-gradient(90deg,var(--cyan),#60a5fa,var(--cyan));background-size:200% 100%;border-radius:2px;margin-bottom:16px;animation:shimmer 1s linear infinite;display:none}
+.loading-bar.on{display:block}
+.loading-msg{display:none;padding:28px;text-align:center;font-size:13px;color:var(--text2);font-family:'JetBrains Mono',monospace;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;align-items:center;justify-content:center;gap:10px}
+.loading-msg.on{display:flex}
+.loading-msg i{color:var(--cyan);animation:spin .7s linear infinite}
 
-        /* 2. ÁREA DE CONTEÚDO PRINCIPAL */
-        .main-content {
-            margin-left: 260px;
-            flex-grow: 1;
-            padding: 40px;
-            max-width: 1200px;
-            position: relative;
-            z-index: 1;
-        }
+/* ── RESULTS ── */
+.result-area{animation:fadeIn .3s ease}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.result-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease-in-out infinite;display:inline-block}
+.result-actions{display:flex;gap:7px}
+.btn-copy{padding:7px 14px;border-radius:var(--r2);font-size:12px;font-weight:700;
+  background:linear-gradient(135deg,var(--cyan2),var(--cyan3));color:#fff;display:flex;align-items:center;gap:5px}
+.btn-copy:hover{transform:translateY(-1px)}
+.btn-exp{padding:7px 12px;border-radius:var(--r2);font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.btn-exp.json{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(192,132,252,.25)}
+.btn-exp.csv{background:var(--green-bg);color:var(--green);border:1px solid rgba(74,222,128,.25)}
+.btn-exp:hover{opacity:.8}
+.result-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;margin-bottom:10px;position:relative;overflow:hidden;animation:slideInLeft .22s ease}
+.result-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--card-accent,var(--cyan))}
+.result-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.result-src-row{display:flex;align-items:center;gap:9px}
+.result-src-icon{width:32px;height:32px;border-radius:7px;flex-shrink:0;
+  background:var(--cyan-bg);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+.result-src-name{font-size:11px;font-weight:700;color:var(--cyan);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.result-src-sub{font-size:11px;color:var(--text3)}
+.badge-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;letter-spacing:.04em}
+.badge-ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(74,222,128,.25)}
+.badge-warn{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.badge-neutral{background:var(--cyan-bg);color:var(--cyan);border:1px solid rgba(34,211,238,.25)}
+.data-table{width:100%;border-collapse:collapse;margin-top:6px}
+.data-table tr{border-bottom:1px solid var(--border)}
+.data-table tr:last-child{border-bottom:none}
+.data-table td{padding:7px 6px;font-size:13px;vertical-align:top}
+.data-table td:first-child{font-weight:600;color:var(--text2);white-space:nowrap;padding-right:16px;width:36%}
+.data-table td:last-child{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px;word-break:break-all}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+.social-profiles{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.soc-card{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r2)}
+.soc-card:hover{border-color:var(--border2);background:rgba(255,255,255,.05)}
+.soc-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.soc-name{font-size:13px;font-weight:700;color:var(--text)}
+.soc-url{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.soc-arrow{margin-left:auto;font-size:11px;color:var(--cyan);flex-shrink:0}
+.search-links{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.search-link-card{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r2)}
+.search-link-card:hover{border-color:var(--border2)}
+.result-ts{font-size:11px;color:var(--text3);margin-top:10px;font-family:'JetBrains Mono',monospace}
 
-        /* Topbar / Header */
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
-        }
+/* ── LIMIT BANNER ── */
+.limit-banner{padding:16px 20px;background:var(--red-bg);border:1px solid rgba(248,113,113,.25);
+  border-radius:var(--r);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.limit-banner i{color:var(--red);font-size:18px;flex-shrink:0}
+.limit-banner-title{font-size:13px;font-weight:700;color:var(--red)}
+.limit-banner-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.locked-banner{padding:28px;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);
+  text-align:center;margin-top:12px}
+.locked-banner i{font-size:36px;color:var(--red);margin-bottom:12px;display:block}
+.locked-banner-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px}
+.locked-banner-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.btn-upgrade{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;
+  border-radius:var(--r2);background:linear-gradient(135deg,#c084fc,#7c3aed);
+  color:#fff;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(124,58,237,.35)}
+.btn-upgrade:hover{transform:translateY(-1px)}
 
-        .header-title h1 {
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            margin-bottom: 4px;
-        }
+/* ── DROPDOWN SEARCH STAGE (module selected → search input appears inline) ── */
+.mod-search-stage{padding:20px;animation:fadeInDown .22s ease}
+.mod-search-stage-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.mod-search-back{width:30px;height:30px;border-radius:6px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.mod-search-back:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.mod-search-mod-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.mod-search-label{font-size:14px;font-weight:800;color:var(--text)}
+.mod-search-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.mod-search-inp-row{display:flex;gap:8px;margin-bottom:8px}
+.mod-search-inp-row input{flex:1;padding:11px 14px;font-size:14px;border-radius:var(--r2)}
+.btn-mod-consult{padding:11px 22px;border-radius:var(--r2);background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:13px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:6px;
+  box-shadow:0 3px 14px rgba(6,182,212,.4)}
+.btn-mod-consult:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(6,182,212,.5)}
+.btn-mod-consult:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.mod-search-hint{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 
-        .header-title p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
+/* ── STREAMING RESULTS ── */
+.stream-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.stream-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.stream-count{background:var(--cyan-bg);color:var(--cyan);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid rgba(34,211,238,.2)}
+.stream-actions{display:flex;gap:7px}
+.stream-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:10px;animation:slideInLeft .22s ease both;
+  position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.stream-card:hover{border-color:var(--border2);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.stream-card-accent{position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.stream-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.stream-card-source{display:flex;align-items:center;gap:8px}
+.stream-card-source-icon{width:28px;height:28px;border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid rgba(255,255,255,.1)}
+.stream-card-source-name{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.stream-card-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em;white-space:nowrap}
+.stream-card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.35}
+.stream-card-desc{font-size:12.5px;color:var(--text2);line-height:1.55;margin-bottom:10px}
+.stream-card-fields{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.stream-field{font-size:11px;font-family:'JetBrains Mono',monospace;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:4px;padding:3px 8px;color:var(--text2)}
+.stream-field strong{color:var(--text);font-weight:600}
+.stream-card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding-top:10px;border-top:1px solid var(--border)}
+.stream-card-ts{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.btn-goto-source{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+  border-radius:var(--r2);background:linear-gradient(135deg,var(--cyan2),var(--cyan3));
+  color:#fff;font-size:12px;font-weight:700;box-shadow:0 2px 10px rgba(6,182,212,.35)}
+.btn-goto-source:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(6,182,212,.5)}
+.stream-skeleton{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:10px}
+.skel-line{height:12px;background:linear-gradient(90deg,rgba(255,255,255,.04) 0%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 100%);
+  background-size:200% 100%;border-radius:4px;animation:shimmer 1.4s linear infinite}
+.skel-line.h{height:16px;margin-bottom:8px;width:55%}
+.skel-line.m{height:11px;margin-bottom:5px;width:80%}
+.skel-line.s{height:11px;margin-bottom:5px;width:60%}
+.progress-bar-wrap{height:2px;background:rgba(34,211,238,.1);border-radius:2px;margin-bottom:14px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),#60a5fa);border-radius:2px;transition:width .3s ease}
 
-        .discord-btn {
-            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
-            color: #fff;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+/* ── ADMIN ── */
+.admin-hdr{margin-bottom:22px}
+.admin-hdr-title{font-size:20px;font-weight:900;display:flex;align-items:center;gap:10px;color:var(--text)}
+.admin-hdr-title i{color:var(--cyan)}
+.admin-hdr-sub{font-size:13px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.tabs{display:flex;gap:4px;margin-bottom:16px;background:rgba(255,255,255,.03);padding:4px;border-radius:var(--r2);border:1px solid var(--border)}
+.tab-btn{padding:8px 14px;border-radius:6px;font-size:12.5px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:5px;background:none}
+.tab-btn.active{background:rgba(34,211,238,.1);color:var(--cyan)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.sec-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;color:var(--text)}
+.sec-title i{color:var(--cyan)}
+.sec-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.btn-sm{padding:6px 12px;border-radius:var(--r3);font-size:12px;font-weight:600;border:1px solid transparent;display:inline-flex;align-items:center;gap:5px}
+.btn-sm.primary{background:var(--cyan2);color:#000}
+.btn-sm.primary:hover{background:var(--cyan)}
+.btn-sm.danger{background:var(--red-bg);color:var(--red);border-color:rgba(248,113,113,.25)}
+.btn-sm.danger:hover{background:var(--red);color:#fff}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:8px 12px;border-bottom:1px solid var(--border2);text-align:left;font-family:'JetBrains Mono',monospace}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.03)}
+.td-user{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan)!important}
+.td-date{font-size:12px;color:var(--text3)!important;font-family:'JetBrains Mono',monospace}
+.empty-state{padding:32px;text-align:center;color:var(--text3);font-size:13px}
+.empty-state i{font-size:28px;display:block;margin-bottom:8px}
 
-        .discord-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
-        }
+/* ── SIDEBAR OVERLAY (mobile) ── */
+.sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99;display:none}
+.sb-overlay.open{display:block}
 
-        /* Layout Grid do Dashboard */
-        .dashboard-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* Grid de Cards Analíticos */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-        }
-
-        .stat-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-sub {
-            font-size: 12px;
-            color: #10b981;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Layout Dividido (Editor + Lista) */
-        .columns-layout {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 1024px) {
-            .columns-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Sandbox / Terminal (Igual à Lofypay Interface) */
-        .panel-box {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            background-color: rgba(255, 255, 255, 0.01);
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .panel-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Sandbox Terminal Real */
-        .terminal-body {
-            background-color: var(--bg-terminal);
-            padding: 20px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            min-height: 250px;
-        }
-
-        .line { margin-bottom: 6px; word-break: break-all; }
-        .prompt { color: var(--accent-purple); font-weight: bold; }
-        .command { color: var(--text-main); }
-        .output { color: var(--text-muted); margin-left: 10px; margin-bottom: 10px; }
-
-        .input-line { display: flex; align-items: center; margin-top: 10px; }
-        #terminal-input {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            flex-grow: 1;
-            outline: none;
-            margin-left: 6px;
-        }
-
-        /* Tabela estilo App Lofypay */
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            padding: 14px 20px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        td {
-            padding: 14px 20px;
-            font-size: 13px;
-            border-bottom: 1px solid var(--border-subtle);
-            color: #e4e4e7;
-        }
-
-        tr:last-child td { border-bottom: none; }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 99px;
-            background: rgba(16, 185, 129, 0.06);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .discord-inline-link {
-            color: #5865F2;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .discord-inline-link:hover { text-decoration: underline; }
-
-        /* Responsividade para telas menores */
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 20px; }
-        }
-    </style>
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-100%;top:0;bottom:0;z-index:100;transition:left .25s ease}
+  .sidebar.open{left:0}
+  .btn-menu{display:flex!important}
+  .page-content{padding:16px 14px 50px}
+  .stats-grid,.admin-stats{grid-template-columns:1fr 1fr}
+  .search-row{flex-direction:column}
+  .search-row input,.btn-consult{width:100%}
+  .topbar{padding:0 14px}
+  .mod-cards-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <img src="1000609185.png" alt="RuneScript">
-            <span>RuneScript</span>
+<div id="toast-wrap"></div>
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- MODULE SEARCH MODAL -->
+<div class="mod-modal-overlay" id="mod-modal-overlay" onclick="handleModModalClick(event)">
+  <div class="mod-modal" id="mod-modal">
+    <div class="mod-modal-top" id="mod-modal-top">
+      <i class="fas fa-satellite-dish mod-modal-top-icon" id="mod-modal-icon"></i>
+      <div>
+        <div class="mod-modal-top-name" id="mod-modal-name">Módulo</div>
+        <div class="mod-modal-top-sub" id="mod-modal-sub">fontes públicas</div>
+      </div>
+      <button class="mod-modal-top-close" onclick="closeModModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div id="mod-modal-inner"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="screen-login" class="screen centered">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon"><i class="fas fa-satellite-dish"></i></div>
+      <div>
+        <div class="login-logo-text">Data<span>Gov</span></div>
+        <div class="login-tagline">// <strong>OSINT</strong> · Inteligência de Fontes Abertas</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Usuário</label>
+      <div class="inp-wrap"><i class="fas fa-at inp-ico"></i>
+        <input type="text" id="login-user" placeholder="nome_usuario" autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <div class="inp-wrap"><i class="fas fa-lock inp-ico"></i>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+    </div>
+    <div id="login-alert" class="hidden"></div>
+    <button class="btn-primary" id="btn-login"><i class="fas fa-satellite-dish"></i> Acessar Plataforma</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PIN ═══════════════ -->
+<div id="modal-pin" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="pin-title">Verificar PIN</div>
+    <div class="modal-sub" id="pin-sub">Digite seu PIN de 6 dígitos</div>
+    <div class="pin-stage" id="pin-stage"></div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div><div class="pin-dot" id="d5"></div>
+    </div>
+    <div id="pin-alert" class="hidden" style="margin-bottom:12px"></div>
+    <div class="pin-grid">
+      <button class="pin-key" data-n="1">1</button><button class="pin-key" data-n="2">2</button><button class="pin-key" data-n="3">3</button>
+      <button class="pin-key" data-n="4">4</button><button class="pin-key" data-n="5">5</button><button class="pin-key" data-n="6">6</button>
+      <button class="pin-key" data-n="7">7</button><button class="pin-key" data-n="8">8</button><button class="pin-key" data-n="9">9</button>
+      <button class="pin-key" data-n=""></button><button class="pin-key" data-n="0">0</button>
+      <button class="pin-key del" id="pin-del"><i class="fas fa-delete-left"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="screen-dash" class="screen hidden" style="flex-direction:row;background:var(--bg)">
+  <aside class="sidebar" id="dash-sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark"><i class="fas fa-satellite-dish"></i></div>
+      <div>
+        <div class="sb-logo-word">Data<span>Gov</span></div>
+        <div class="sb-logo-sub">// osint intelligence</div>
+      </div>
+    </div>
+    <div class="sb-label">Principal</div>
+    <nav class="sb-nav">
+      <button class="sb-item active" id="nav-home"><i class="fas fa-house"></i> Dashboard</button>
+      <button class="sb-item" id="nav-modules-btn"><i class="fas fa-satellite-dish"></i> Módulos</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar"><i class="fas fa-user"></i></div>
+        <div style="min-width:0">
+          <div class="sb-username" id="sb-username">usuário</div>
+          <div class="sb-userplan" id="sb-userplan">Bronze</div>
         </div>
-        <nav class="nav-group">
-            <a href="#" class="nav-item active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-code"></i> Meus Scripts</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-bolt"></i> Automações</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-layer-group"></i> Extensões</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-book"></i> Documentação</a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-badge">
-                <div class="user-dot"></div>
-                <span>Ambiente: Beta-Core</span>
-            </div>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-l">
+        <button class="btn-icon btn-menu" onclick="openSidebar('dash-sidebar')"><i class="fas fa-bars"></i></button>
+        <div>
+          <div class="topbar-title">DataGov OSINT</div>
+          <div class="topbar-sub" id="topbar-sub">selecione um módulo para consultar</div>
         </div>
-    </aside>
+      </div>
+      <div class="topbar-r">
+        <span id="dash-chip"></span>
+        <button class="btn-logout" id="btn-logout-dash"><i class="fas fa-right-from-bracket"></i> Sair</button>
+      </div>
+    </div>
+    <div class="page-content" id="page-content">
+      <!-- injected by JS -->
+    </div>
+  </div>
+</div>
 
-    <main class="main-content">
-        
-        <header class="content-header">
-            <div class="header-title">
-                <h1>Painel de Controle</h1>
-                <p>Monitore, desenvolva e publique scripts de automação de elite.</p>
+<!-- ═══════════════ ADMIN ═══════════════ -->
+<div id="screen-admin" class="screen hidden" style="flex-direction:row;background:var(--bg)">
+  <aside class="sidebar" id="admin-sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark"><i class="fas fa-satellite-dish"></i></div>
+      <div>
+        <div class="sb-logo-word">Data<span>Gov</span></div>
+        <div class="sb-logo-sub">// admin</div>
+      </div>
+    </div>
+    <div class="sb-label">Administração</div>
+    <nav class="sb-nav">
+      <button class="sb-item active"><i class="fas fa-shield-halved"></i> Painel Admin</button>
+      <button class="sb-item" id="btn-logout-admin"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar"><i class="fas fa-shield-halved"></i></div>
+        <div>
+          <div class="sb-username">Administrador</div>
+          <div class="sb-userplan">Acesso total</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-l">
+        <button class="btn-icon btn-menu" onclick="openSidebar('admin-sidebar')"><i class="fas fa-bars"></i></button>
+        <div>
+          <div class="topbar-title">Painel Administrativo</div>
+          <div class="topbar-sub">gerenciamento da plataforma</div>
+        </div>
+      </div>
+      <div class="topbar-r">
+        <span class="chip chip-admin">Admin</span>
+        <button class="btn-logout" id="btn-logout-admin2"><i class="fas fa-right-from-bracket"></i> Sair</button>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="admin-hdr">
+        <div class="admin-hdr-title"><i class="fas fa-shield-halved"></i> Painel Administrativo</div>
+        <div class="admin-hdr-sub">// gerencie usuários, planos e atividades</div>
+      </div>
+      <div class="admin-stats">
+        <div class="stat-card"><div class="stat-lbl">Usuários</div><div class="stat-val" id="st-users">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">Total Consultas</div><div class="stat-val" id="st-searches">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">Logs hoje</div><div class="stat-val" id="st-today">0</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="criar"><i class="fas fa-user-plus"></i> Criar</button>
+        <button class="tab-btn" data-tab="usuarios"><i class="fas fa-users"></i> Usuários</button>
+        <button class="tab-btn" data-tab="planos"><i class="fas fa-layer-group"></i> Planos</button>
+        <button class="tab-btn" data-tab="logs"><i class="fas fa-scroll"></i> Logs</button>
+      </div>
+      <div class="tab-panel active" id="tab-criar">
+        <div class="sec-card">
+          <div class="sec-title"><i class="fas fa-user-plus"></i> Criar Nova Conta</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Usuário</label><div class="inp-wrap"><i class="fas fa-at inp-ico"></i><input type="text" id="new-user" placeholder="nome_usuario"></div></div>
+            <div class="form-group"><label>Senha</label><div class="inp-wrap"><i class="fas fa-lock inp-ico"></i><input type="password" id="new-pass" placeholder="mínimo 4 chars"></div></div>
+            <div class="form-group"><label>Plano</label><select id="new-plan"><option value="Bronze">Bronze</option><option value="Gold">Gold</option><option value="Diamond">Diamond</option></select></div>
+          </div>
+          <div id="create-alert" class="hidden"></div>
+          <button class="btn-sm primary" id="btn-create-user" style="margin-top:8px"><i class="fas fa-plus"></i> Criar Usuário</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-usuarios">
+        <div class="sec-card">
+          <div class="sec-title-row">
+            <div class="sec-title" style="margin-bottom:0"><i class="fas fa-users"></i> Usuários Cadastrados</div>
+          </div>
+          <table><thead><tr><th>Usuário</th><th>Plano</th><th>Consultas</th><th>Cadastro</th><th>Ação</th></tr></thead>
+          <tbody id="users-tbody"></tbody></table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-planos">
+        <div class="sec-card">
+          <div class="sec-title"><i class="fas fa-layer-group"></i> Alterar Plano</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Usuário</label><select id="plan-user-sel"><option value="">Selecione...</option></select></div>
+            <div class="form-group"><label>Novo Plano</label><select id="plan-new-val"><option value="Bronze">Bronze</option><option value="Gold">Gold</option><option value="Diamond">Diamond</option></select></div>
+          </div>
+          <div id="plan-alert" class="hidden"></div>
+          <button class="btn-sm primary" id="btn-upd-plan" style="margin-top:8px"><i class="fas fa-save"></i> Atualizar Plano</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-logs">
+        <div class="sec-card">
+          <div class="sec-title-row">
+            <div class="sec-title" style="margin-bottom:0"><i class="fas fa-scroll"></i> Logs de Consulta</div>
+            <button class="btn-sm danger" id="btn-clear-logs"><i class="fas fa-trash"></i> Limpar</button>
+          </div>
+          <table style="margin-top:14px"><thead><tr><th>Usuário</th><th>Módulo</th><th>Termo</th><th>Data</th></tr></thead>
+          <tbody id="logs-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════ CONFIG ═══════════ */
+const ADMIN_USER = 'dafyganggov';
+const ADMIN_PASS = 'dafy123';
+
+const PLAN_CONFIG = {
+  Bronze:  { modules:['dominio','site'],                                    dailyLimit:20,  label:'Bronze',  icon:'🥉', color:'#fcd34d' },
+  Gold:    { modules:['dominio','site','cep','username','termo'],            dailyLimit:50,  label:'Gold',    icon:'🥇', color:'#fbbf24' },
+  Diamond: { modules:['dominio','site','cep','username','termo','cnpj','ip'], dailyLimit:120, label:'Diamond', icon:'💎', color:'#c084fc' },
+};
+
+const MODULES = [
+  { id:'cep',      label:'Consulta CEP',       icon:'fa-map-pin',        color:'#0891b2', bg:'rgba(8,145,178,.15)',    ph:'00000-000 ou 8 dígitos',             hint:'Ex: 01310100',                     desc:'Endereço completo via ViaCEP',      sources:['ViaCEP','Correios'] },
+  { id:'dominio',  label:'Whois / Domínio',    icon:'fa-globe',          color:'#7c3aed', bg:'rgba(124,58,237,.15)',   ph:'google.com / exemplo.com.br',        hint:'Sem http://',                      desc:'RDAP, DNS, nameservers públicos',   sources:['RDAP/IANA','Cloudflare DoH'] },
+  { id:'site',     label:'URL / Site',         icon:'fa-link',           color:'#059669', bg:'rgba(5,150,105,.15)',    ph:'https://exemplo.com',                hint:'Ex: https://github.com',           desc:'DNS, HTTPS, IP e tecnologias',      sources:['Cloudflare DoH','DNS Público'] },
+  { id:'username', label:'Nome / Username',    icon:'fa-at',             color:'#d97706', bg:'rgba(217,119,6,.15)',    ph:'@usuario ou usuario',                hint:'Ex: elonmusk, torvalds',           desc:'Perfis públicos em redes sociais',  sources:['12 Plataformas'] },
+  { id:'termo',    label:'Termo Livre',        icon:'fa-magnifying-glass',color:'#be185d',bg:'rgba(190,24,93,.15)',   ph:'Nome, empresa, evento...',           hint:'Ex: "João Silva" empresa',         desc:'OSINT em 12 fontes públicas',       sources:['Google','Reddit','Twitter','...'] },
+  { id:'cnpj',     label:'CNPJ',               icon:'fa-building',       color:'#1d4ed8', bg:'rgba(29,78,216,.15)',   ph:'00.000.000/0001-00 ou só números',   hint:'Ex: 11222333000181',               desc:'Receita Federal dados abertos',     sources:['ReceitaWS','Receita Federal'] },
+  { id:'ip',       label:'Consulta IP',        icon:'fa-network-wired',  color:'#0f766e', bg:'rgba(15,118,110,.15)',   ph:'8.8.8.8 ou 2001:db8::1',             hint:'Ex: 1.1.1.1 (IPv4 ou IPv6)',        desc:'Geolocalização e informações do IP',sources:['ipapi.co','ip-api.com'] },
+];
+
+/* ═══════════ STORAGE ═══════════ */
+const S = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)||'null'); } catch { return null; } },
+  set: (k,v) => localStorage.setItem(k, JSON.stringify(v)),
+  getUsers:  ()    => S.get('dg_users') || [],
+  saveUsers: u     => S.set('dg_users', u),
+  getLogs:   ()    => S.get('dg_logs')  || [],
+  saveLogs:  l     => S.set('dg_logs',  l),
+  addLog:    (user,mod,termo) => { const l=S.getLogs(); l.push({user,mod,termo,ts:new Date().toISOString()}); S.saveLogs(l.slice(-500)); },
+  getSession:()    => { const u=sessionStorage.getItem('dg_u'); return u?{username:u,isAdmin:sessionStorage.getItem('dg_a')==='1'}:null; },
+  setSession:(u,a) => { sessionStorage.setItem('dg_u',u); sessionStorage.setItem('dg_a',a?'1':'0'); },
+  clearSession:()  => sessionStorage.clear(),
+  // Daily counter per user
+  getDayKey: (user) => `dg_day_${user}_${new Date().toISOString().slice(0,10)}`,
+  getDailyCount: (user) => S.get(S.getDayKey(user)) || 0,
+  incDailyCount: (user) => S.set(S.getDayKey(user), S.getDailyCount(user)+1),
+};
+
+/* ═══════════ STATE ═══════════ */
+let currentUser = null;
+let currentPlan = 'Bronze';
+let activeModule = null;
+let lastData = null;
+
+/* ═══════════ HELPERS ═══════════ */
+const _esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const _delay = ms => new Promise(r=>setTimeout(r,ms));
+const _pick  = arr => arr[Math.floor(Math.random()*arr.length)];
+
+function _regiaoUF(uf) {
+  const r = {AC:'Norte',AM:'Norte',AP:'Norte',PA:'Norte',RO:'Norte',RR:'Norte',TO:'Norte',AL:'Nordeste',BA:'Nordeste',CE:'Nordeste',MA:'Nordeste',PB:'Nordeste',PE:'Nordeste',PI:'Nordeste',RN:'Nordeste',SE:'Nordeste',DF:'Centro-Oeste',GO:'Centro-Oeste',MS:'Centro-Oeste',MT:'Centro-Oeste',ES:'Sudeste',MG:'Sudeste',RJ:'Sudeste',SP:'Sudeste',PR:'Sul',RS:'Sul',SC:'Sul'};
+  return r[uf]||'—';
+}
+function _guesstech(h) {
+  const m=[]; h=h.toLowerCase();
+  if(h.includes('shopify'))m.push('Shopify');
+  if(h.includes('github'))m.push('GitHub Pages');
+  if(h.includes('vercel'))m.push('Vercel');
+  if(h.includes('netlify'))m.push('Netlify');
+  if(h.includes('cloudflare'))m.push('Cloudflare');
+  if(h.includes('amazonaws'))m.push('AWS');
+  if(h.includes('azurewebsites'))m.push('Azure');
+  if(h.includes('appspot'))m.push('GCP App Engine');
+  return m.length?m.join(', '):'—';
+}
+
+/* ═══════════ TOAST ═══════════ */
+function toast(msg, type='info') {
+  const ic={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<i class="fas ${ic[type]}"></i><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>{ el.style.cssText='opacity:0;transform:translateX(14px);transition:all .28s'; setTimeout(()=>el.remove(),280); },3200);
+}
+
+/* ═══════════ ALERTS ═══════════ */
+function showAlert(id,msg,type='error'){
+  const el=document.getElementById(id); if(!el) return;
+  const ic={error:'fa-circle-xmark',success:'fa-circle-check',info:'fa-circle-info'};
+  el.className=`alert alert-${type}`;
+  el.innerHTML=`<i class="fas ${ic[type]}"></i> ${msg}`;
+  el.classList.remove('hidden');
+}
+function hideAlert(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); }
+
+/* ═══════════ SCREEN ═══════════ */
+function showScreen(name){
+  ['login','dash','admin'].forEach(s=>document.getElementById(`screen-${s}`).classList.add('hidden'));
+  document.getElementById(`screen-${name}`).classList.remove('hidden');
+}
+
+/* ═══════════ SHA256 ═══════════ */
+async function sha256(s){
+  const b=new TextEncoder().encode(s);
+  const h=await crypto.subtle.digest('SHA-256',b);
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+/* ═══════════ PIN ═══════════ */
+let _pin='',_pinStage='',_pinFirst='',_pinCb=null;
+function openPin(mode,cb){
+  _pin='';_pinFirst='';_pinCb=cb;hideAlert('pin-alert');
+  document.getElementById('pin-stage').textContent='';
+  if(mode==='create'){_pinStage='set1';document.getElementById('pin-title').textContent='Criar PIN';document.getElementById('pin-sub').textContent='Crie um PIN de 6 dígitos';}
+  else{_pinStage='verify';document.getElementById('pin-title').textContent='Verificar PIN';document.getElementById('pin-sub').textContent='Digite seu PIN de 6 dígitos';}
+  updatePinDots();
+  document.getElementById('modal-pin').classList.remove('hidden');
+}
+const closePin=()=>{ document.getElementById('modal-pin').classList.add('hidden'); _pin=''; };
+const updatePinDots=()=>{ for(let i=0;i<6;i++) document.getElementById(`d${i}`).classList.toggle('filled',i<_pin.length); };
+const pinKey=n=>{ if(_pin.length>=6||!n) return; _pin+=n; updatePinDots(); if(_pin.length===6) setTimeout(pinDone,130); };
+const pinDel=()=>{ _pin=_pin.slice(0,-1); updatePinDots(); };
+async function pinDone(){
+  if(_pinStage==='set1'){
+    _pinFirst=_pin;_pin='';_pinStage='set2';
+    document.getElementById('pin-sub').textContent='Confirme o PIN';
+    document.getElementById('pin-stage').textContent='Repita o PIN';
+    updatePinDots();
+  } else if(_pinStage==='set2'){
+    if(_pin!==_pinFirst){ showAlert('pin-alert','PINs não coincidem.','error'); _pin='';_pinFirst='';_pinStage='set1'; document.getElementById('pin-sub').textContent='Crie um PIN de 6 dígitos'; document.getElementById('pin-stage').textContent=''; updatePinDots(); return; }
+    const h=await sha256(_pin),p=_pin; closePin(); if(_pinCb) _pinCb(p,h);
+  } else {
+    const p=_pin; closePin(); if(_pinCb) _pinCb(p,null);
+  }
+}
+document.querySelectorAll('.pin-key[data-n]').forEach(b=>b.addEventListener('click',()=>pinKey(b.dataset.n)));
+document.getElementById('pin-del').addEventListener('click',pinDel);
+
+/* ═══════════ LOGIN ═══════════ */
+document.getElementById('btn-login').addEventListener('click',doLogin);
+document.getElementById('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+async function doLogin(){
+  const username=document.getElementById('login-user').value.trim().toLowerCase();
+  const password=document.getElementById('login-pass').value;
+  if(!username||!password){ showAlert('login-alert','Preencha usuário e senha.','error'); return; }
+  hideAlert('login-alert');
+  const btn=document.getElementById('btn-login');
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  try {
+    if(username===ADMIN_USER){
+      const h=await sha256(password),ch=await sha256(ADMIN_PASS);
+      if(h===ch){ await doPinFlow(username,true); return; }
+      showAlert('login-alert','Credenciais inválidas.','error'); return;
+    }
+    const ph=await sha256(password);
+    const user=S.getUsers().find(u=>u.username===username&&u.senhaHash===ph);
+    if(!user){ showAlert('login-alert','Usuário ou senha incorretos.','error'); return; }
+    await doPinFlow(username,false,user);
+  } finally {
+    btn.innerHTML='<i class="fas fa-satellite-dish"></i> Acessar Plataforma'; btn.disabled=false;
+  }
+}
+
+async function doPinFlow(username,isAdmin,userObj=null){
+  const pinH=isAdmin?localStorage.getItem('dg_admin_pin'):(userObj?.pinHash||null);
+  if(!pinH){
+    openPin('create',async(pin,newH)=>{
+      if(isAdmin) localStorage.setItem('dg_admin_pin',newH);
+      else{ const us=S.getUsers(),i=us.findIndex(u=>u.username===username); if(i>=0){us[i].pinHash=newH;S.saveUsers(us);} }
+      toast('PIN criado!','success'); finishLogin(username,isAdmin);
+    });
+  } else {
+    openPin('verify',async pin=>{
+      const t=await sha256(pin);
+      if(t!==pinH){ toast('PIN incorreto.','error'); await doPinFlow(username,isAdmin,userObj); return; }
+      finishLogin(username,isAdmin);
+    });
+  }
+}
+
+function finishLogin(username,isAdmin){
+  S.setSession(username,isAdmin);
+  if(isAdmin){ loadAdmin(); showScreen('admin'); }
+  else{
+    const user=S.getUsers().find(u=>u.username===username);
+    currentUser=username; currentPlan=user?.plano||'Bronze';
+    loadDash(); showScreen('dash');
+  }
+  toast(`Bem-vindo, ${username}!`,'success');
+}
+
+/* ═══════════ LOGOUT ═══════════ */
+function logout(){
+  S.clearSession(); currentUser=null; currentPlan='Bronze'; activeModule=null; lastData=null;
+  document.getElementById('login-user').value=''; document.getElementById('login-pass').value='';
+  hideAlert('login-alert'); showScreen('login'); toast('Sessão encerrada.','info');
+}
+document.getElementById('btn-logout-dash').addEventListener('click',logout);
+document.getElementById('btn-logout-admin').addEventListener('click',logout);
+document.getElementById('btn-logout-admin2').addEventListener('click',logout);
+
+/* ═══════════ DASHBOARD ═══════════ */
+function loadDash(){
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  document.getElementById('sb-username').textContent=currentUser;
+  document.getElementById('sb-userplan').textContent='Plano '+currentPlan;
+  const chip=document.getElementById('dash-chip');
+  chip.className=`chip chip-${currentPlan.toLowerCase()}`; chip.textContent=currentPlan;
+  showDashHome();
+}
+
+function showDashHome(){
+  activeModule=null; lastData=null;
+  document.getElementById('topbar-sub').textContent='selecione um módulo para consultar';
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('nav-home').classList.add('active');
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const used=S.getDailyCount(currentUser);
+  const remaining=Math.max(0,cfg.dailyLimit-used);
+  const valClass=remaining===0?'danger':remaining<=5?'warn':'';
+
+  const modCards = MODULES.map(m => {
+    const locked = !cfg.modules.includes(m.id);
+    const planNeeded = locked ? Object.entries(PLAN_CONFIG).find(([,v])=>v.modules.includes(m.id))?.[0]||'' : '';
+    const isPopular = ['dominio','cep','cnpj'].includes(m.id);
+    const progressPct = locked ? 0 : Math.max(0,Math.round((remaining/cfg.dailyLimit)*100));
+    return `
+      <div class="mod-card${locked?' locked':''}" ${locked?'':`onclick="openModModal('${m.id}')"`}>
+        <div class="mod-card-banner" style="background:linear-gradient(135deg,${m.color}cc,${m.color}55)">
+          <i class="fas ${m.icon} mod-card-banner-icon"></i>
+        </div>
+        <div class="mod-card-body">
+          <div class="mod-card-name">${m.label}</div>
+          <div class="mod-card-desc">${m.desc}</div>
+          <div class="mod-card-footer">
+            ${locked
+              ? `<span class="mod-card-badge locked-badge">\u{1F512} ${planNeeded}</span>`
+              : `<span class="mod-card-badge mais-utilizado">${isPopular?'Popular':'Disponível'}</span>`}
+            ${locked ? '' : `<span class="mod-card-credits"><i class="fas fa-circle-dot"></i> ${remaining} restantes</span>`}
+          </div>
+          ${!locked ? `<div class="mod-card-progress"><div class="mod-card-progress-fill" style="width:${progressPct}%"></div></div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('page-content').innerHTML=`
+    <div class="dash-home">
+      <div class="welcome-banner">
+        <div>
+          <div class="welcome-text-title">Olá, ${_esc(currentUser)} 👋</div>
+          <div class="welcome-text-sub">// plataforma osint · dados públicos e legais · clique em um módulo para consultar</div>
+        </div>
+        <div class="plan-pill">
+          <div class="plan-pill-icon">${cfg.icon}</div>
+          <div>
+            <div class="plan-pill-name" style="color:${cfg.color}">Plano ${cfg.label}</div>
+            <div class="plan-pill-feat">${cfg.modules.length} módulos · ${cfg.dailyLimit} consultas/dia</div>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-lbl">Consultas hoje</div>
+          <div class="stat-val ${valClass}">${used}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Restantes hoje</div>
+          <div class="stat-val ${valClass}">${remaining}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Módulos liberados</div>
+          <div class="stat-val">${cfg.modules.length}</div>
+        </div>
+      </div>
+      <div class="modules-section">
+        <div class="modules-section-title"><i class="fas fa-satellite-dish"></i> Módulos de Consulta</div>
+        <div class="mod-cards-grid">${modCards}</div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════ MODULE MODAL ═══════════ */
+function openModModal(id){
+  const m=MODULES.find(x=>x.id===id);
+  if(!m) return;
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const locked=!cfg.modules.includes(id);
+  const used=S.getDailyCount(currentUser);
+  const remaining=Math.max(0,cfg.dailyLimit-used);
+
+  // Set banner
+  const top=document.getElementById('mod-modal-top');
+  top.style.background=`linear-gradient(135deg,${m.color}cc,${m.color}55)`;
+  document.getElementById('mod-modal-icon').className=`fas ${m.icon} mod-modal-top-icon`;
+  document.getElementById('mod-modal-name').textContent=m.label;
+  document.getElementById('mod-modal-sub').textContent=m.sources.join(' · ');
+
+  const inner=document.getElementById('mod-modal-inner');
+  if(locked){
+    const planNeeded=Object.entries(PLAN_CONFIG).find(([,v])=>v.modules.includes(id))?.[0]||'';
+    inner.innerHTML=`
+      <div class="mod-modal-locked">
+        <i class="fas fa-lock"></i>
+        <div class="mod-modal-locked-title">Módulo bloqueado</div>
+        <div class="mod-modal-locked-sub">Este módulo está disponível apenas no plano <strong>${planNeeded}</strong> ou superior.</div>
+        <button class="btn-upgrade" onclick="closeModModal()"><i class="fas fa-arrow-up"></i> Fazer Upgrade</button>
+      </div>`;
+  } else {
+    inner.innerHTML=`
+      <div class="mod-modal-body">
+        <div class="mod-modal-label"><i class="fas fa-terminal"></i> Consultar ${m.label}</div>
+        <div class="mod-modal-inp-row">
+          <input type="text" id="mod-modal-input" placeholder="${m.ph}" autocomplete="off">
+          <button class="btn-modal-consult" id="btn-modal-consult" ${remaining===0?'disabled':''}>
+            <i class="fas fa-magnifying-glass"></i> Consultar
+          </button>
+        </div>
+        <div class="mod-modal-hint">› ${m.hint} · ${remaining} consultas restantes hoje</div>
+        <div id="mod-modal-alert" style="margin-top:8px"></div>
+      </div>`;
+    setTimeout(()=>{ const i=document.getElementById('mod-modal-input'); if(i) i.focus(); },100);
+    const runFn=()=>launchFromModal(m);
+    document.getElementById('btn-modal-consult').addEventListener('click',runFn);
+    document.getElementById('mod-modal-input').addEventListener('keydown',e=>{ if(e.key==='Enter') runFn(); });
+  }
+
+  document.getElementById('mod-modal-overlay').classList.add('open');
+}
+
+function closeModModal(){
+  document.getElementById('mod-modal-overlay').classList.remove('open');
+}
+
+function handleModModalClick(e){
+  if(e.target===document.getElementById('mod-modal-overlay')) closeModModal();
+}
+
+async function launchFromModal(m){
+  const inp=document.getElementById('mod-modal-input');
+  const term=inp?inp.value.trim():'';
+  if(!term){ toast('Digite um termo para consultar.','error'); return; }
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const used=S.getDailyCount(currentUser);
+  if(used>=cfg.dailyLimit){ toast('Limite diário atingido.','error'); closeModModal(); return; }
+
+  closeModModal();
+  activeModule=m; lastData=null;
+  document.getElementById('topbar-sub').textContent=`módulo: ${m.label} · "${term}"`;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('nav-modules-btn').classList.add('active');
+  renderConsultViewStreaming(term);
+}
+
+// Stubs for old references
+function openModuleMenu(){ }
+function closeModuleMenu(){ }
+function buildModuleDropdown(){ }
+
+document.getElementById('nav-home').addEventListener('click',()=>{ closeSidebar(); showDashHome(); });
+document.getElementById('nav-modules-btn').addEventListener('click',()=>{ closeSidebar(); showDashHome(); });
+
+/* ═══════════ CONSULT VIEW (legacy – kept for direct module nav) ═══════════ */
+function renderConsultView(){
+  const m=activeModule;
+  if(!m) return;
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const used=S.getDailyCount(currentUser);
+  const remaining=Math.max(0,cfg.dailyLimit-used);
+  document.getElementById('page-content').innerHTML=`
+    <div class="consult-view" id="consult-view">
+      <div class="consult-header">
+        <button class="back-btn" onclick="showDashHome()" title="Voltar"><i class="fas fa-arrow-left"></i></button>
+        <div class="consult-mod-icon" style="background:${m.bg};color:${m.color}"><i class="fas ${m.icon}"></i></div>
+        <div>
+          <div class="consult-title">${m.label}</div>
+          <div class="consult-subtitle">${m.sources.join(' · ')} · ${remaining} consultas restantes hoje</div>
+        </div>
+        <button style="margin-left:auto;padding:7px 14px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px" onclick="showDashHome()">
+          <i class="fas fa-exchange-alt"></i> Trocar Módulo
+        </button>
+      </div>
+      ${remaining===0?`<div class="limit-banner"><i class="fas fa-exclamation-triangle"></i><div><div class="limit-banner-title">Limite diário atingido</div><div class="limit-banner-sub">Você usou todas as ${cfg.dailyLimit} consultas de hoje. O limite reinicia à meia-noite.</div></div></div>`:''}
+      <div class="consult-box">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:11px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-terminal"></i> <span style="color:var(--cyan)">›_</span> ${m.label}
+        </div>
+        <div class="search-row">
+          <input type="text" id="search-input" placeholder="${m.ph}" ${remaining===0?'disabled':''}>
+          <button class="btn-consult" id="btn-consult" ${remaining===0?'disabled':''}>
+            <i class="fas fa-magnifying-glass"></i> Consultar
+          </button>
+        </div>
+        <div class="consult-hint">› ${m.hint}</div>
+      </div>
+      <div class="loading-bar" id="loading-bar"></div>
+      <div class="loading-msg" id="loading-msg"><i class="fas fa-circle-notch"></i> Consultando fontes públicas...</div>
+      <div id="result-area"></div>
+    </div>`;
+
+  document.getElementById('btn-consult').addEventListener('click',doConsult);
+  document.getElementById('search-input').addEventListener('keydown',e=>{ if(e.key==='Enter') doConsult(); });
+  if(remaining>0) document.getElementById('search-input').focus();
+}
+
+/* ═══════════ CONSULT VIEW — STREAMING (new dropdown-launch flow) ═══════════ */
+function renderConsultViewStreaming(term){
+  const m=activeModule;
+  if(!m) return;
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const used=S.getDailyCount(currentUser);
+  const remaining=Math.max(0,cfg.dailyLimit-used);
+
+  document.getElementById('page-content').innerHTML=`
+    <div class="consult-view" id="consult-view">
+      <div class="consult-header">
+        <button class="back-btn" onclick="showDashHome()" title="Voltar"><i class="fas fa-arrow-left"></i></button>
+        <div class="consult-mod-icon" style="background:${m.bg};color:${m.color}"><i class="fas ${m.icon}"></i></div>
+        <div>
+          <div class="consult-title">${m.label}</div>
+          <div class="consult-subtitle" id="stream-subtitle">${m.sources.join(' · ')} · ${remaining} consultas restantes hoje</div>
+        </div>
+        <button style="margin-left:auto;padding:7px 14px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px" onclick="showDashHome()">
+          <i class="fas fa-exchange-alt"></i> Novo Módulo
+        </button>
+      </div>
+
+      <!-- Quick search bar stays visible above results -->
+      <div class="consult-box" style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-terminal"></i> <span style="color:var(--cyan)">›_</span> ${m.label} — nova consulta
+        </div>
+        <div class="search-row">
+          <input type="text" id="search-input" placeholder="${m.ph}" value="${_esc(term)}" ${remaining===0?'disabled':''}>
+          <button class="btn-consult" id="btn-consult" ${remaining===0?'disabled':''}>
+            <i class="fas fa-magnifying-glass"></i> Consultar
+          </button>
+        </div>
+        <div class="consult-hint">› ${m.hint}</div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-bar-wrap" id="stream-progress-wrap" style="display:none">
+        <div class="progress-bar-fill" id="stream-progress" style="width:0%"></div>
+      </div>
+
+      <!-- Stream status -->
+      <div id="stream-status" style="font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:12px;display:none;align-items:center;gap:7px">
+        <span class="live-dot"></span>
+        <span id="stream-status-text">Iniciando consulta...</span>
+      </div>
+
+      <!-- Results stream here -->
+      <div id="stream-header-row" style="display:none">
+        <div class="stream-header">
+          <div class="stream-meta">
+            <span class="live-dot"></span>
+            <span>Resultados encontrados:</span>
+            <span class="stream-count" id="stream-count">0</span>
+          </div>
+          <div class="stream-actions">
+            <button class="btn-copy" onclick="copyAll()"><i class="fas fa-copy"></i> Copiar</button>
+            <button class="btn-exp json" onclick="exportJSON()"><i class="fas fa-file-code"></i> JSON</button>
+            <button class="btn-exp csv"  onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+          </div>
+        </div>
+      </div>
+      <div id="result-area"></div>
+    </div>`;
+
+  document.getElementById('btn-consult').addEventListener('click',doConsult);
+  document.getElementById('search-input').addEventListener('keydown',e=>{ if(e.key==='Enter') doConsult(); });
+
+  // Begin streaming automatically
+  if(remaining>0) doStreamConsult(term);
+  else toast('Limite diário atingido.','error');
+}
+
+
+/* ═══════════ CONSULT ENGINE ═══════════ */
+async function doConsult(){
+  const term=document.getElementById('search-input').value.trim();
+  if(!term){ toast('Digite um termo para consultar.','error'); return; }
+  if(!activeModule) return;
+  const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+  const used=S.getDailyCount(currentUser);
+  if(used>=cfg.dailyLimit){ toast('Limite diário atingido. Faça upgrade do seu plano.','error'); return; }
+  if(!cfg.modules.includes(activeModule.id)){ toast('Módulo não disponível no seu plano.','error'); return; }
+
+  // Check if we are in streaming view (has stream-progress-wrap)
+  if(document.getElementById('stream-progress-wrap')){
+    // Update title and re-run streaming
+    document.getElementById('topbar-sub').textContent=`módulo: ${activeModule.label} · "${term}"`;
+    await doStreamConsult(term);
+    return;
+  }
+
+  // Legacy non-streaming path (renderConsultView)
+  const btn=document.getElementById('btn-consult');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Consultando...';
+  document.getElementById('loading-bar').classList.add('on');
+  document.getElementById('loading-msg').classList.add('on');
+  document.getElementById('result-area').innerHTML='';
+
+  try {
+    const svcMap={
+      cep:      ()=>consultaService.buscarCEP(term),
+      cnpj:     ()=>consultaService.buscarCNPJ(term),
+      dominio:  ()=>consultaService.buscarDominio(term),
+      site:     ()=>consultaService.buscarSite(term),
+      username: ()=>consultaService.buscarUsername(term),
+      termo:    ()=>consultaService.buscarTermo(term),
+      ip:       ()=>streamEngines.ip(term),
+    };
+    const fn=svcMap[activeModule.id];
+    if(!fn) throw new Error('Módulo não disponível');
+    const data=await fn();
+    lastData=data;
+    S.addLog(currentUser, activeModule.label, term);
+    S.incDailyCount(currentUser);
+    renderResult(data, term);
+    const newUsed=S.getDailyCount(currentUser);
+    const newRemaining=Math.max(0,cfg.dailyLimit-newUsed);
+    const sub=document.querySelector('.consult-subtitle');
+    if(sub) sub.textContent=`${activeModule.sources.join(' · ')} · ${newRemaining} consultas restantes hoje`;
+  } catch(err){
+    toast('Erro: '+(err.message||'tente novamente.'),'error');
+  } finally {
+    document.getElementById('loading-bar').classList.remove('on');
+    document.getElementById('loading-msg').classList.remove('on');
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-magnifying-glass"></i> Consultar'; }
+  }
+}
+
+/* ═══════════ RENDER RESULT ═══════════ */
+function renderResult(data, term){
+  const area=document.getElementById('result-area');
+  const m=activeModule;
+  const statusClass={ok:'badge-ok',warn:'badge-warn',neutral:'badge-neutral'}[data.status||'neutral'];
+  const statusLabel={ok:'✓ Encontrado',warn:'⚠ Atenção',neutral:'ℹ Consulta OSINT'}[data.status||'neutral'];
+  const accentColor={cep:'#22d3ee',cnpj:'#60a5fa',dominio:'#c084fc',site:'#4ade80',username:'#fbbf24',termo:'#f472b6'}[m.id]||'#22d3ee';
+
+  const tableRows=data.campos.map(c=>{
+    if(!c.v && c.v!==0) return `<tr><td colspan="2" style="font-weight:800;color:var(--cyan);font-size:11px;padding-top:12px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase">${_esc(c.k)}</td></tr>`;
+    const val=String(c.v);
+    if(val.startsWith('[[LINK:')&&val.endsWith(']]')){
+      const url=val.slice(7,-2);
+      return `<tr><td>${_esc(c.k)}</td><td><a href="${_esc(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${_esc(url)} <i class="fas fa-arrow-up-right-from-square" style="font-size:10px"></i></a></td></tr>`;
+    }
+    return `<tr><td>${_esc(c.k)}</td><td>${_esc(val)}</td></tr>`;
+  }).join('');
+
+  let socialsHtml='';
+  if(data.socials){
+    socialsHtml=`<div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:9px;font-family:'JetBrains Mono',monospace">▸ Perfis — verificar manualmente</div>
+      <div class="social-profiles">${data.socials.map(s=>`
+        <a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" class="soc-card">
+          <div class="soc-icon" style="background:${s.color}22;color:${s.color}"><i class="fab ${s.icon}"></i></div>
+          <div><div class="soc-name">${_esc(s.name)}</div><div class="soc-url">${_esc(s.url)}</div></div>
+          <i class="fas fa-arrow-right soc-arrow"></i>
+        </a>`).join('')}
+      </div></div>`;
+  }
+
+  let searchLinksHtml='';
+  if(data.searchLinks){
+    searchLinksHtml=`<div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:9px;font-family:'JetBrains Mono',monospace">▸ Links de busca pública gerados</div>
+      <div class="search-links">${data.searchLinks.map(s=>`
+        <a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" class="search-link-card">
+          <div class="soc-icon" style="background:rgba(34,211,238,.1);color:var(--cyan)"><i class="fas ${s.icon}"></i></div>
+          <div><div class="soc-name">${_esc(s.name)}</div><div class="soc-url" style="color:var(--text3)">${_esc(s.note)}</div></div>
+          <i class="fas fa-arrow-right soc-arrow"></i>
+        </a>`).join('')}
+      </div></div>`;
+  }
+
+  const rawText=data.campos.map(c=>c.v?`${c.k}: ${c.v}`:c.k).join('\n');
+
+  area.innerHTML=`
+    <div class="result-area">
+      <div class="result-header">
+        <div class="result-meta"><span class="live-dot"></span> Resultado OSINT · fontes públicas</div>
+        <div class="result-actions">
+          <button class="btn-copy" onclick="copyAll()"><i class="fas fa-copy"></i> Copiar</button>
+          <button class="btn-exp json" onclick="exportJSON()"><i class="fas fa-file-code"></i> JSON</button>
+          <button class="btn-exp csv" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+        </div>
+      </div>
+      <div class="result-card" style="--card-accent:${accentColor}">
+        <div class="result-card-top">
+          <div class="result-src-row">
+            <div class="result-src-icon"><i class="fas ${m.icon}"></i></div>
+            <div>
+              <div class="result-src-name">${m.label}</div>
+              <div class="result-src-sub">${(data.fontes||[]).map(f=>f.label).join(' · ')}</div>
             </div>
-            <a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="discord-btn">
-                <i class="fa-brands fa-discord"></i> Entrar no Discord
-            </a>
-        </header>
+          </div>
+          <span class="badge-status ${statusClass}">${statusLabel}</span>
+        </div>
+        <table class="data-table">${tableRows}</table>
+        ${socialsHtml}
+        ${searchLinksHtml}
+        <div class="result-ts">Consultado: ${new Date().toLocaleString('pt-BR')} · ${_esc(term)}</div>
+      </div>
+    </div>`;
 
-        <div class="dashboard-grid">
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Compilador JIT</div>
-                    <div class="stat-value">Ativo v1.0</div>
-                    <div class="stat-sub"><i class="fa-solid fa-circle-check"></i> Pronto para uso</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Requisições Globais</div>
-                    <div class="stat-value">1.2M/dia</div>
-                    <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> +14.2% esta semana</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Latência Média</div>
-                    <div class="stat-value">14ms</div>
-                    <div class="stat-sub" style="color: var(--accent-cyan)"><i class="fa-solid fa-bolt"></i> Desempenho Máximo</div>
-                </div>
-            </div>
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+}
 
-            <div class="columns-layout">
-                
-                <div class="panel-box">
-                    <div class="panel-header">
-                        <div class="panel-title"><i class="fa-solid fa-terminal" style="color: var(--accent-purple)"></i> Rune Sandbox Interativo</div>
-                        <span style="font-size: 11px; color: var(--text-muted)">main.runes</span>
-                    </div>
-                    <div class="terminal-body" id="terminal">
-                        <div id="terminal-history">
-                            <div class="line">
-                                <span class="prompt">runescript ~</span> <span class="command">help</span>
-                            </div>
-                            <div class="line output">
-                                Comandos disponíveis na Sandbox de divulgação:<br>
-                                - <span style="color: var(--accent-cyan)">info</span>: Descrição do ecossistema.<br>
-                                - <span style="color: var(--accent-cyan)">features</span>: Diferenciais da linguagem.<br>
-                                - <span style="color: var(--accent-cyan)">discord</span>: Obter link da comunidade real.<br>
-                                - <span style="color: var(--accent-cyan)">clear</span>: Limpar histórico.
-                            </div>
-                        </div>
-                        <div class="input-line">
-                            <span class="prompt">runescript ~</span>
-                            <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
-                        </div>
-                    </div>
-                </div>
+/* ═══════════ COPY / EXPORT ═══════════ */
+async function copyAll(){
+  if(!lastData) return;
+  const text=[
+    `═══ DataGov OSINT · ${activeModule.label} ═══`,
+    `Data: ${new Date().toLocaleString('pt-BR')}`,
+    `─────────────────────`,
+    ...lastData.campos.map(c=>c.v?`${c.k}: ${c.v}`:'\n── '+c.k+' ──'),
+    `─────────────────────`,
+    'DataGov · Inteligência de Fontes Abertas',
+  ].join('\n');
+  try{ await navigator.clipboard.writeText(text); toast('Copiado!','success'); }
+  catch{ toast('Erro ao copiar.','error'); }
+}
+function exportJSON(){
+  if(!lastData) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(lastData,null,2)],{type:'application/json'}));
+  a.download=`datagov_${activeModule.id}_${Date.now()}.json`; a.click();
+  toast('JSON exportado!','success');
+}
+function exportCSV(){
+  if(!lastData) return;
+  const rows=lastData.campos.filter(c=>c.v).map(c=>[`"${c.k}"`,`"${String(c.v).replace(/"/g,'""')}"`].join(','));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['Campo,Valor\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download=`datagov_${activeModule.id}_${Date.now()}.csv`; a.click();
+  toast('CSV exportado!','success');
+}
 
-                <div class="panel-box">
-                    <div class="panel-header">
-                        <div class="panel-title"><i class="fa-solid fa-list-check"></i> Módulos do Sistema</div>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Módulo</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>discord_bot_core.runes</td>
-                                    <td><span class="status-pill">Online</span></td>
-                                </tr>
-                                <tr>
-                                    <td>http_router.runes</td>
-                                    <td><span class="status-pill">Online</span></td>
-                                </tr>
-                                <tr>
-                                    <td>task_scheduler.runes</td>
-                                    <td><span class="status-pill">Online</span></td>
-                                </tr>
-                                <tr>
-                                    <td>security_shield.runes</td>
-                                    <td><span class="status-pill">Online</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+/* ═══════════ SIDEBAR ═══════════ */
+function openSidebar(id){ document.getElementById(id).classList.add('open'); document.getElementById('sb-overlay').classList.add('open'); }
+function closeSidebar(){ document.querySelectorAll('.sidebar').forEach(s=>s.classList.remove('open')); document.getElementById('sb-overlay').classList.remove('open'); }
 
-            </div> </div>
-    </main>
+/* ═══════════ CONSULT SERVICE ═══════════ */
+const consultaService = {
+  buscarCEP: async(cep)=>{
+    const c=cep.replace(/\D/g,'');
+    if(c.length!==8) throw new Error('CEP inválido. Use 8 dígitos (ex: 01310100)');
+    const r=await fetch(`https://viacep.com.br/ws/${c}/json/`);
+    if(!r.ok) throw new Error('Erro ao acessar ViaCEP.');
+    const d=await r.json();
+    if(d.erro) throw new Error('CEP não encontrado.');
+    return {
+      _modulo:'cep',_termo:cep,
+      campos:[
+        {k:'CEP',v:d.cep},{k:'Logradouro',v:d.logradouro||'—'},{k:'Complemento',v:d.complemento||'—'},
+        {k:'Bairro',v:d.bairro||'—'},{k:'Cidade',v:d.localidade},{k:'UF',v:d.uf},
+        {k:'Região',v:_regiaoUF(d.uf)},{k:'DDD',v:d.ddd},{k:'Código IBGE',v:d.ibge},
+        {k:'GIA',v:d.gia||'—'},{k:'SIAFI',v:d.siafi||'—'},
+      ],
+      fontes:[{label:'ViaCEP'},{label:'Correios'}],status:'ok',
+    };
+  },
+  buscarCNPJ: async(cnpj)=>{
+    const c=cnpj.replace(/\D/g,'');
+    if(c.length!==14) throw new Error('CNPJ inválido. Use 14 dígitos.');
+    const r=await fetch(`https://receitaws.com.br/v1/cnpj/${c}`,{headers:{'Accept':'application/json'}});
+    if(r.status===429) throw new Error('Limite de requisições. Aguarde 1 min e tente novamente.');
+    if(!r.ok) throw new Error('Erro ao consultar. Verifique o CNPJ.');
+    const d=await r.json();
+    if(d.status==='ERROR') throw new Error(d.message||'CNPJ não encontrado.');
+    return {
+      _modulo:'cnpj',_termo:cnpj,
+      campos:[
+        {k:'CNPJ',v:d.cnpj},{k:'Razão Social',v:d.nome},{k:'Nome Fantasia',v:d.fantasia||'—'},
+        {k:'Situação',v:d.situacao},{k:'Data de Abertura',v:d.abertura},{k:'Natureza Jurídica',v:d.natureza_juridica},
+        {k:'CNAE Principal',v:d.atividade_principal?.[0]?.text||'—'},{k:'Capital Social',v:d.capital_social?`R$ ${d.capital_social}`:'—'},
+        {k:'Porte',v:d.porte},{k:'Tipo',v:d.tipo},
+        {k:'Endereço',v:[d.logradouro,d.numero,d.bairro].filter(Boolean).join(', ')||'—'},
+        {k:'Município / UF',v:d.municipio&&d.uf?`${d.municipio} / ${d.uf}`:'—'},
+        {k:'CEP',v:d.cep||'—'},{k:'Telefone',v:d.telefone||'—'},{k:'E-mail Público',v:d.email||'—'},
+        {k:'Última Atualização',v:d.ultima_atualizacao||'—'},
+        {k:'Sócios',v:d.qsa?.map(s=>s.nome).join(', ')||'—'},
+      ],
+      fontes:[{label:'ReceitaWS'},{label:'Receita Federal'}],
+      status:d.situacao==='ATIVA'?'ok':'warn',
+    };
+  },
+  buscarDominio: async(domain)=>{
+    const d=domain.replace(/^https?:\/\//i,'').replace(/\//g,'').toLowerCase().trim();
+    if(!d.includes('.')) throw new Error('Digite um domínio válido (ex: google.com)');
+    let rdapData=null,dnsData=null;
+    try{
+      const tld=d.split('.').pop();
+      const bs=await fetch('https://data.iana.org/rdap/dns.json');
+      const boot=await bs.json();
+      let rdapBase=null;
+      for(const svc of boot.services){ if(svc[0].includes(tld)){rdapBase=svc[1][0];break;} }
+      if(rdapBase){ const rr=await fetch(`${rdapBase}domain/${d}`); if(rr.ok) rdapData=await rr.json(); }
+    }catch(e){}
+    try{
+      const dr=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(d)}&type=A`,{headers:{'Accept':'application/dns-json'}});
+      if(dr.ok) dnsData=await dr.json();
+    }catch(e){}
+    const registrar=rdapData?.entities?.find(e=>e.roles?.includes('registrar'))?.vcardArray?.[1]?.find(v=>v[0]==='fn')?.[3]||'—';
+    const created=rdapData?.events?.find(e=>e.eventAction==='registration')?.eventDate;
+    const updated=rdapData?.events?.find(e=>e.eventAction==='last changed')?.eventDate;
+    const expires=rdapData?.events?.find(e=>e.eventAction==='expiration')?.eventDate;
+    const ns=rdapData?.nameservers?.map(n=>n.ldhName||n.unicodeName).join(', ')||'—';
+    const aRec=dnsData?.Answer?.filter(r=>r.type===1).map(r=>r.data).join(', ')||'—';
+    return {
+      _modulo:'dominio',_termo:domain,
+      campos:[
+        {k:'Domínio',v:d},{k:'Registrar',v:registrar},
+        {k:'Status',v:rdapData?.status?.join(', ')||'—'},
+        {k:'Data Registro',v:created?new Date(created).toLocaleDateString('pt-BR'):'—'},
+        {k:'Última Atualização',v:updated?new Date(updated).toLocaleDateString('pt-BR'):'—'},
+        {k:'Expiração',v:expires?new Date(expires).toLocaleDateString('pt-BR'):'—'},
+        {k:'Nameservers',v:ns},{k:'IP (A record)',v:aRec},{k:'TLD',v:'.'+d.split('.').pop()},
+      ],
+      fontes:[{label:'RDAP/IANA'},{label:'Cloudflare DoH'}],
+      status:rdapData?'ok':'neutral',
+    };
+  },
+  buscarSite: async(url)=>{
+    let target=url.trim();
+    if(!/^https?:\/\//i.test(target)) target='https://'+target;
+    const u=new URL(target);
+    const hostname=u.hostname;
+    let ipAddr='—',dnsOk=false;
+    try{
+      const dns=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,{headers:{'Accept':'application/dns-json'}});
+      const dd=await dns.json();
+      if(dd.Answer?.length){ ipAddr=dd.Answer.filter(r=>r.type===1).map(r=>r.data).join(', '); dnsOk=true; }
+    }catch(e){}
+    let hasFav=false;
+    try{ const f=await fetch(`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`); hasFav=f.ok; }catch(e){}
+    return {
+      _modulo:'site',_termo:url,
+      campos:[
+        {k:'URL',v:target},{k:'Hostname',v:hostname},
+        {k:'DNS',v:dnsOk?'✓ Resolvido':'✗ Não encontrado'},
+        {k:'IP(s)',v:ipAddr},{k:'HTTPS',v:target.startsWith('https://')?'✓ Ativo':'✗ Não detectado'},
+        {k:'Favicon',v:hasFav?'✓ Encontrado':'—'},
+        {k:'Tecnologias (heurística)',v:_guesstech(hostname)},
+        {k:'TLD',v:'.'+hostname.split('.').pop()},
+      ],
+      fontes:[{label:'Cloudflare DoH'},{label:'DNS Público'}],
+      status:dnsOk?'ok':'warn',
+    };
+  },
+  buscarUsername: async(username)=>{
+    const u=username.replace(/^@/,'').trim();
+    if(!u||u.length<2) throw new Error('Username inválido (mínimo 2 caracteres).');
+    if(!/^[a-zA-Z0-9._\-]+$/.test(u)) throw new Error('Username contém caracteres inválidos.');
+    await _delay(500);
+    const socials=[
+      {name:'GitHub',    icon:'fa-github',    color:'#e2e8f0', url:`https://github.com/${u}`},
+      {name:'Twitter/X', icon:'fa-x-twitter', color:'#e2e8f0', url:`https://x.com/${u}`},
+      {name:'Instagram', icon:'fa-instagram', color:'#e1306c', url:`https://instagram.com/${u}`},
+      {name:'TikTok',    icon:'fa-tiktok',    color:'#e2e8f0', url:`https://tiktok.com/@${u}`},
+      {name:'LinkedIn',  icon:'fa-linkedin',  color:'#0a66c2', url:`https://linkedin.com/in/${u}`},
+      {name:'Reddit',    icon:'fa-reddit',    color:'#ff4500', url:`https://reddit.com/user/${u}`},
+      {name:'YouTube',   icon:'fa-youtube',   color:'#ff0000', url:`https://youtube.com/@${u}`},
+      {name:'Pinterest', icon:'fa-pinterest', color:'#e60023', url:`https://pinterest.com/${u}`},
+      {name:'Twitch',    icon:'fa-twitch',    color:'#9146ff', url:`https://twitch.tv/${u}`},
+      {name:'Steam',     icon:'fa-steam',     color:'#c2c2c2', url:`https://steamcommunity.com/id/${u}`},
+      {name:'Keybase',   icon:'fa-key',       color:'#33a0ff', url:`https://keybase.io/${u}`},
+      {name:'Dev.to',    icon:'fa-dev',       color:'#e2e8f0', url:`https://dev.to/${u}`},
+    ];
+    return {
+      _modulo:'username',_termo:username,
+      campos:[{k:'Username',v:`@${u}`},{k:'Plataformas',v:`${socials.length} links gerados`},{k:'Nota',v:'Verifique manualmente cada perfil abaixo'}],
+      socials,
+      fontes:[{label:'Links Públicos'}],status:'neutral',
+    };
+  },
+  buscarTermo: async(termo)=>{
+    if(!termo.trim()) throw new Error('Digite um termo para buscar.');
+    await _delay(350);
+    const enc=encodeURIComponent(termo);
+    const searchLinks=[
+      {name:'Google',         icon:'fa-google',           url:`https://www.google.com/search?q=${enc}`,              note:'Busca web geral'},
+      {name:'Google News',    icon:'fa-newspaper',        url:`https://news.google.com/search?q=${enc}`,             note:'Notícias recentes'},
+      {name:'Twitter/X',      icon:'fa-x-twitter',        url:`https://x.com/search?q=${enc}&f=live`,                note:'Posts públicos em tempo real'},
+      {name:'Reddit',         icon:'fa-reddit',           url:`https://www.reddit.com/search/?q=${enc}`,             note:'Fóruns e discussões'},
+      {name:'YouTube',        icon:'fa-youtube',          url:`https://www.youtube.com/results?search_query=${enc}`, note:'Vídeos públicos'},
+      {name:'GitHub',         icon:'fa-github',           url:`https://github.com/search?q=${enc}`,                  note:'Código e repositórios'},
+      {name:'LinkedIn',       icon:'fa-linkedin',         url:`https://www.linkedin.com/search/results/all/?keywords=${enc}`, note:'Perfis e empresas'},
+      {name:'DuckDuckGo',     icon:'fa-magnifying-glass', url:`https://duckduckgo.com/?q=${enc}`,                    note:'Busca com privacidade'},
+      {name:'Bing',           icon:'fa-b',                url:`https://www.bing.com/search?q=${enc}`,                note:'Índice alternativo'},
+      {name:'Wayback Machine',icon:'fa-clock-rotate-left',url:`https://web.archive.org/web/*/${enc}`,               note:'Histórico arquivado da web'},
+      {name:'Pastebin',       icon:'fa-paste',            url:`https://www.google.com/search?q=site:pastebin.com+${enc}`, note:'Pastes públicos via Google'},
+      {name:'Shodan',         icon:'fa-server',           url:`https://www.shodan.io/search?query=${enc}`,           note:'Dispositivos e serviços públicos'},
+    ];
+    return {
+      _modulo:'termo',_termo:termo,
+      campos:[{k:'Termo',v:termo},{k:'Fontes geradas',v:`${searchLinks.length} links de busca`},{k:'Metodologia',v:'OSINT passivo · fontes públicas indexadas'}],
+      searchLinks,
+      fontes:[{label:'OSINT Passivo'}],status:'neutral',
+    };
+  },
+};
 
-    <script>
-        const inputEl = document.getElementById('terminal-input');
-        const historyEl = document.getElementById('terminal-history');
-        const terminalContainer = document.getElementById('terminal');
+/* ═══════════ STREAMING CONSULT ENGINE ═══════════ */
 
-        terminalContainer.addEventListener('click', () => inputEl.focus());
+/* Helper: set progress bar */
+function setProgress(pct){
+  const b=document.getElementById('stream-progress');
+  const w=document.getElementById('stream-progress-wrap');
+  if(!b||!w) return;
+  w.style.display='block';
+  b.style.width=pct+'%';
+  if(pct>=100){ setTimeout(()=>{ if(w) w.style.display='none'; },600); }
+}
+/* Helper: set status text */
+function setStatus(txt){
+  const s=document.getElementById('stream-status');
+  const st=document.getElementById('stream-status-text');
+  if(!s||!st) return;
+  s.style.display='flex'; st.textContent=txt;
+}
+function hideStatus(){
+  const s=document.getElementById('stream-status'); if(s) s.style.display='none';
+}
 
-        inputEl.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const rawInput = this.value;
-                const command = rawInput.trim().toLowerCase();
-                
-                if (rawInput.trim() === '') return;
+/* Helper: add a skeleton card while loading */
+function addSkeleton(id){
+  const area=document.getElementById('result-area'); if(!area) return;
+  const sk=document.createElement('div');
+  sk.className='stream-skeleton'; sk.id=id;
+  sk.innerHTML='<div class="skel-line h"></div><div class="skel-line m"></div><div class="skel-line s"></div><div class="skel-line m" style="width:40%"></div>';
+  area.appendChild(sk);
+}
+/* Helper: replace skeleton with a real card */
+function replaceSkeleton(skId, cardHtml){
+  const sk=document.getElementById(skId);
+  const area=document.getElementById('result-area');
+  if(!sk||!area) return;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=cardHtml;
+  const card=tmp.firstElementChild;
+  sk.replaceWith(card);
+  // bump counter
+  const cnt=document.getElementById('stream-count');
+  if(cnt) cnt.textContent=String(parseInt(cnt.textContent||'0')+1);
+  // show header row
+  const hr=document.getElementById('stream-header-row');
+  if(hr) hr.style.display='block';
+}
+/* Helper: remove skeleton on error */
+function removeSkeleton(skId){
+  const sk=document.getElementById(skId); if(sk) sk.remove();
+}
 
-                const cmdLine = document.createElement('div');
-                cmdLine.className = 'line';
-                cmdLine.innerHTML = `<span class="prompt">runescript ~</span> <span class="command">${rawInput}</span>`;
-                historyEl.appendChild(cmdLine);
+/* Build a stream card HTML */
+function buildStreamCard(opts){
+  const { accent='#22d3ee', sourceIcon='fa-globe', sourceName='Fonte', sourceBg='rgba(34,211,238,.1)', sourceColor='var(--cyan)',
+          badgeClass='badge-neutral', badgeText='Info',
+          title='', desc='', fields=[], url='', urlLabel='Ir pra fonte', ts='' } = opts;
+  const fieldsHtml=fields.map(f=>`<div class="stream-field"><strong>${_esc(f.k)}</strong> ${_esc(f.v)}</div>`).join('');
+  const urlBtn = url ? `<a href="${_esc(url)}" target="_blank" rel="noopener noreferrer" class="btn-goto-source"><i class="fas fa-arrow-up-right-from-square"></i> ${urlLabel}</a>` : '';
+  return `
+  <div class="stream-card">
+    <div class="stream-card-accent" style="background:${accent}"></div>
+    <div class="stream-card-top">
+      <div class="stream-card-source">
+        <div class="stream-card-source-icon" style="background:${sourceBg};color:${sourceColor}"><i class="fas ${sourceIcon}"></i></div>
+        <div>
+          <div class="stream-card-source-name" style="color:${sourceColor}">${_esc(sourceName)}</div>
+        </div>
+      </div>
+      <span class="stream-card-badge ${badgeClass}">${badgeText}</span>
+    </div>
+    ${title?`<div class="stream-card-title">${_esc(title)}</div>`:''}
+    ${desc?`<div class="stream-card-desc">${desc}</div>`:''}
+    ${fieldsHtml?`<div class="stream-card-fields">${fieldsHtml}</div>`:''}
+    <div class="stream-card-footer">
+      <span class="stream-card-ts">${ts||new Date().toLocaleString('pt-BR')}</span>
+      ${urlBtn}
+    </div>
+  </div>`;
+}
 
-                let outputHTML = '';
+/* Build social-profile card */
+function buildSocialCard(s, term){
+  return `
+  <div class="stream-card">
+    <div class="stream-card-accent" style="background:${s.color}"></div>
+    <div class="stream-card-top">
+      <div class="stream-card-source">
+        <div class="stream-card-source-icon" style="background:${s.color}22;color:${s.color}"><i class="fab ${s.icon}"></i></div>
+        <div><div class="stream-card-source-name" style="color:${s.color}">${_esc(s.name)}</div></div>
+      </div>
+      <span class="stream-card-badge badge-neutral">Perfil Público</span>
+    </div>
+    <div class="stream-card-title">${_esc(s.name)} — @${_esc(term)}</div>
+    <div class="stream-card-desc">Perfil encontrado via OSINT. Clique em "Ir pra fonte" para visualizar os dados públicos deste perfil.</div>
+    <div class="stream-card-footer">
+      <span class="stream-card-ts">Link gerado: ${new Date().toLocaleString('pt-BR')}</span>
+      <a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" class="btn-goto-source">
+        <i class="fas fa-arrow-up-right-from-square"></i> Ir pra fonte
+      </a>
+    </div>
+  </div>`;
+}
 
-                switch(command) {
-                    case 'help':
-                        outputHTML = `Comandos disponíveis:<br>
-                        - <strong style="color:var(--accent-cyan)">info</strong>: Descrição do ecossistema.<br>
-                        - <strong style="color:var(--accent-cyan)">features</strong>: Diferenciais da linguagem.<br>
-                        - <strong style="color:var(--accent-cyan)">discord</strong>: Obter link da comunidade real.<br>
-                        - <strong style="color:var(--accent-cyan)">clear</strong>: Limpar histórico.`;
-                        break;
-                    case 'info':
-                        outputHTML = 'RuneScript é uma linguagem de programação moderna, ultra-veloz, focada em automações robustas e bots assíncronos.';
-                        break;
-                    case 'features':
-                        outputHTML = 'Sintaxe limpa inspirada em TypeScript/Go, Compilação JIT nativa, Gestão modular de dependências e consumo mínimo de memória.';
-                        break;
-                    case 'discord':
-                        outputHTML = `O compilador e os testes reais funcionam na nossa comunidade. Entre aqui: <br><a href="https://discord.gg/8HUWVdDwkc" target="_blank" class="discord-inline-link">https://discord.gg/8HUWVdDwkc</a>`;
-                        break;
-                    case 'clear':
-                    case 'cls':
-                        historyEl.innerHTML = '';
-                        break;
-                    default:
-                        outputHTML = `<span style="color: #ef4444;">Comando não reconhecido. Digite "help" para ver as opções.</span>`;
-                }
+/* Build search-link card */
+function buildSearchLinkCard(s){
+  return `
+  <div class="stream-card">
+    <div class="stream-card-accent" style="background:var(--cyan)"></div>
+    <div class="stream-card-top">
+      <div class="stream-card-source">
+        <div class="stream-card-source-icon" style="background:var(--cyan-bg);color:var(--cyan)"><i class="fas ${s.icon}"></i></div>
+        <div><div class="stream-card-source-name" style="color:var(--cyan)">${_esc(s.name)}</div></div>
+      </div>
+      <span class="stream-card-badge badge-neutral">OSINT</span>
+    </div>
+    <div class="stream-card-title">${_esc(s.name)}</div>
+    <div class="stream-card-desc">${_esc(s.note)}</div>
+    <div class="stream-card-footer">
+      <span class="stream-card-ts">${new Date().toLocaleString('pt-BR')}</span>
+      <a href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer" class="btn-goto-source">
+        <i class="fas fa-arrow-up-right-from-square"></i> Ir pra fonte
+      </a>
+    </div>
+  </div>`;
+}
 
-                if (outputHTML) {
-                    const outputLine = document.createElement('div');
-                    outputLine.className = 'line output';
-                    outputLine.innerHTML = outputHTML;
-                    historyEl.appendChild(outputLine);
-                }
+/* Main streaming engine */
+async function doStreamConsult(term){
+  if(!activeModule) return;
+  const m=activeModule;
 
-                this.value = '';
-                terminalContainer.scrollTop = terminalContainer.scrollHeight;
-            }
-        });
-    </script>
+  // Disable consult button while running
+  const btn=document.getElementById('btn-consult');
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Consultando...'; }
+
+  setProgress(5); setStatus('Iniciando consulta em fontes públicas...');
+  document.getElementById('result-area').innerHTML='';
+  const hr=document.getElementById('stream-header-row'); if(hr) hr.style.display='none';
+  const cnt=document.getElementById('stream-count'); if(cnt) cnt.textContent='0';
+
+  try {
+    S.addLog(currentUser, m.label, term);
+    S.incDailyCount(currentUser);
+    // Refresh remaining count in subtitle
+    const cfg=PLAN_CONFIG[currentPlan]||PLAN_CONFIG.Bronze;
+    const newUsed=S.getDailyCount(currentUser);
+    const newRem=Math.max(0,cfg.dailyLimit-newUsed);
+    const sub=document.getElementById('stream-subtitle');
+    if(sub) sub.textContent=`${m.sources.join(' · ')} · ${newRem} consultas restantes hoje`;
+
+    await streamEngines[m.id]?.(term);
+    setProgress(100);
+    const finalCnt=document.getElementById('stream-count');
+    const n=parseInt(finalCnt?.textContent||'0');
+    hideStatus();
+    if(n===0){
+      document.getElementById('result-area').innerHTML=`
+        <div style="padding:32px;text-align:center;background:var(--surf);border:1px solid var(--border);border-radius:var(--r)">
+          <i class="fas fa-satellite-dish" style="font-size:30px;color:var(--text3);display:block;margin-bottom:10px"></i>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px">Nenhum resultado encontrado</div>
+          <div style="font-size:12px;color:var(--text3)">Verifique o termo e tente novamente.</div>
+        </div>`;
+    }
+    // store for export
+    lastData = { _modulo: m.id, _termo: term, campos: [], _streamMode: true };
+  } catch(err){
+    hideStatus();
+    document.getElementById('result-area').innerHTML=`
+      <div class="alert alert-error"><i class="fas fa-circle-xmark"></i> Erro: ${_esc(err.message||'tente novamente.')}</div>`;
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fas fa-magnifying-glass"></i> Consultar'; }
+  }
+}
+
+/* Per-module streaming implementations */
+const streamEngines = {
+
+  /* ── CEP ── */
+  cep: async(term)=>{
+    const c=term.replace(/\D/g,'');
+    if(c.length!==8) throw new Error('CEP inválido. Use 8 dígitos (ex: 01310100).');
+    const skId='sk-cep-1'; addSkeleton(skId);
+    setStatus('Consultando ViaCEP...'); setProgress(30);
+    const r=await fetch(`https://viacep.com.br/ws/${c}/json/`);
+    if(!r.ok) throw new Error('Erro ao acessar ViaCEP.');
+    const d=await r.json();
+    if(d.erro) throw new Error('CEP não encontrado.');
+    setProgress(80); setStatus('Processando dados...');
+    await _delay(200);
+    replaceSkeleton(skId, buildStreamCard({
+      accent:'#22d3ee', sourceIcon:'fa-map-pin', sourceName:'ViaCEP', sourceBg:'rgba(34,211,238,.1)', sourceColor:'var(--cyan)',
+      badgeClass:'badge-ok', badgeText:'✓ Encontrado',
+      title:`CEP ${d.cep} — ${d.localidade}/${d.uf}`,
+      desc:`${d.logradouro?d.logradouro+', ':''} ${d.bairro||''} — ${d.localidade}, ${d.uf}`,
+      fields:[{k:'Logradouro',v:d.logradouro||'—'},{k:'Bairro',v:d.bairro||'—'},{k:'Cidade',v:d.localidade},{k:'UF',v:d.uf},{k:'DDD',v:d.ddd},{k:'IBGE',v:d.ibge}],
+      url:`https://viacep.com.br/ws/${c}/json/`, urlLabel:'Ir pra fonte · ViaCEP',
+    }));
+    // Google Maps link
+    await _delay(200);
+    const mapQuery=encodeURIComponent(`${d.logradouro} ${d.bairro} ${d.localidade} ${d.uf} Brasil`);
+    const skId2='sk-cep-2'; addSkeleton(skId2);
+    setStatus('Gerando links de mapa...'); setProgress(90);
+    await _delay(300);
+    replaceSkeleton(skId2, buildStreamCard({
+      accent:'#4ade80', sourceIcon:'fa-map', sourceName:'Google Maps', sourceBg:'rgba(74,222,128,.1)', sourceColor:'var(--green)',
+      badgeClass:'badge-neutral', badgeText:'Localização',
+      title:'Visualizar no Google Maps',
+      desc:`Endereço completo: ${d.logradouro||''} ${d.bairro||''} - ${d.localidade}/${d.uf}`,
+      fields:[{k:'Região',v:_regiaoUF(d.uf)},{k:'SIAFI',v:d.siafi||'—'},{k:'GIA',v:d.gia||'—'}],
+      url:`https://www.google.com/maps/search/?api=1&query=${mapQuery}`, urlLabel:'Abrir no Maps',
+    }));
+    setProgress(100); lastData={_modulo:'cep',_termo:term,campos:[{k:'CEP',v:d.cep},{k:'Logradouro',v:d.logradouro},{k:'Bairro',v:d.bairro},{k:'Cidade',v:d.localidade},{k:'UF',v:d.uf}],fontes:[{label:'ViaCEP'}],status:'ok'};
+  },
+
+  /* ── CNPJ ── */
+  cnpj: async(term)=>{
+    const c=term.replace(/\D/g,'');
+    if(c.length!==14) throw new Error('CNPJ inválido. Use 14 dígitos.');
+    const skId='sk-cnpj-1'; addSkeleton(skId);
+    setStatus('Consultando Receita Federal (ReceitaWS)...'); setProgress(25);
+    const r=await fetch(`https://receitaws.com.br/v1/cnpj/${c}`,{headers:{'Accept':'application/json'}});
+    if(r.status===429) throw new Error('Limite de requisições da Receita. Aguarde 1 min e tente novamente.');
+    if(!r.ok) throw new Error('Erro ao consultar CNPJ.');
+    const d=await r.json();
+    if(d.status==='ERROR') throw new Error(d.message||'CNPJ não encontrado na Receita.');
+    setProgress(60); setStatus('Processando dados cadastrais...');
+    await _delay(250);
+    const isActive=d.situacao==='ATIVA';
+    replaceSkeleton(skId, buildStreamCard({
+      accent:'#60a5fa', sourceIcon:'fa-building', sourceName:'Receita Federal', sourceBg:'rgba(96,165,250,.1)', sourceColor:'var(--blue)',
+      badgeClass:isActive?'badge-ok':'badge-warn', badgeText:isActive?'✓ Ativa':'⚠ '+d.situacao,
+      title:`${d.nome}${d.fantasia&&d.fantasia!==d.nome?' ('+d.fantasia+')':''}`,
+      desc:`${d.natureza_juridica||'—'} · CNAE: ${d.atividade_principal?.[0]?.text||'—'}`,
+      fields:[{k:'CNPJ',v:d.cnpj},{k:'Abertura',v:d.abertura},{k:'Capital',v:d.capital_social?'R$ '+d.capital_social:'—'},{k:'Porte',v:d.porte},{k:'Tipo',v:d.tipo}],
+      url:`https://www.receitaws.com.br/${c}`, urlLabel:'Ir pra fonte · Receita',
+    }));
+    // Sócios card
+    if(d.qsa?.length){
+      await _delay(350);
+      const skId2='sk-cnpj-2'; addSkeleton(skId2);
+      setStatus('Carregando quadro societário...'); setProgress(75);
+      await _delay(300);
+      replaceSkeleton(skId2, buildStreamCard({
+        accent:'#c084fc', sourceIcon:'fa-users', sourceName:'Quadro Societário', sourceBg:'rgba(192,132,252,.1)', sourceColor:'var(--purple)',
+        badgeClass:'badge-neutral', badgeText:'QSA',
+        title:'Quadro de Sócios e Administradores',
+        desc:d.qsa.map(s=>`${s.nome} (${s.qual})`).join(' · '),
+        fields:d.qsa.map(s=>({k:s.qual,v:s.nome})),
+        url:`https://www.google.com/search?q=${encodeURIComponent(d.nome+' CNPJ '+c+' socios')}`, urlLabel:'Buscar sócios no Google',
+      }));
+    }
+    // Endereço + Contato card
+    await _delay(300);
+    const skId3='sk-cnpj-3'; addSkeleton(skId3);
+    setStatus('Carregando endereço e contato...'); setProgress(88);
+    await _delay(250);
+    replaceSkeleton(skId3, buildStreamCard({
+      accent:'#4ade80', sourceIcon:'fa-map-marker-alt', sourceName:'Endereço Registrado', sourceBg:'rgba(74,222,128,.1)', sourceColor:'var(--green)',
+      badgeClass:'badge-neutral', badgeText:'Localização',
+      title:`${d.municipio||'—'} / ${d.uf||'—'}`,
+      desc:`${[d.logradouro,d.numero,d.complemento,d.bairro].filter(Boolean).join(', ')||'—'}`,
+      fields:[{k:'CEP',v:d.cep||'—'},{k:'Telefone',v:d.telefone||'—'},{k:'E-mail',v:d.email||'—'}],
+      url:d.cep?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.logradouro,d.numero,d.municipio,d.uf].filter(Boolean).join(' '))}`:
+               `https://www.google.com/search?q=${encodeURIComponent(d.nome+' endereço')}`, urlLabel:'Ver no Maps',
+    }));
+    // AI-powered web mentions for the company
+    await _delay(300);
+    const skId4='sk-cnpj-4'; addSkeleton(skId4);
+    setStatus('Buscando menções da empresa na internet (IA)...'); setProgress(92);
+    let aiMentions = [];
+    try {
+      const aiR = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:800,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          system:'Pesquise informações públicas sobre uma empresa brasileira e retorne JSON puro sem markdown. O JSON deve ter "mentions" com array de objetos: {source, title, summary, url, type}. Máximo 3 menções relevantes.',
+          messages:[{role:'user',content:`Pesquise na internet informações públicas sobre a empresa "${d.nome}" (CNPJ ${d.cnpj}). Busque notícias, reclamações em sites como Reclame Aqui, informações públicas relevantes. Retorne JSON.`}]
+        })
+      });
+      if(aiR.ok){ const aiD=await aiR.json(); const txt=aiD.content?.filter(c=>c.type==='text').map(c=>c.text).join('')||''; try{aiMentions=JSON.parse(txt.replace(/```json|```/g,'').trim()).mentions||[];}catch(e){} }
+    } catch(e){}
+    removeSkeleton(skId4);
+    if(aiMentions.length>0){
+      for(let mi=0;mi<aiMentions.length;mi++){
+        const mm=aiMentions[mi]; const skM=`sk-cnpj-m${mi}`; addSkeleton(skM); await _delay(120);
+        replaceSkeleton(skM, buildStreamCard({
+          accent:'#fbbf24', sourceIcon:'fa-newspaper', sourceName:mm.source||'Web', sourceBg:'rgba(251,191,36,.1)', sourceColor:'var(--yellow)',
+          badgeClass:'badge-neutral', badgeText:'Menção Web',
+          title:mm.title||d.nome,
+          desc:mm.summary||'Menção pública encontrada',
+          fields:[], url:mm.url||`https://www.google.com/search?q=${encodeURIComponent(d.nome)}`, urlLabel:'Ir pra fonte',
+        }));
+      }
+    } else {
+      const skM='sk-cnpj-m0'; addSkeleton(skM); await _delay(100);
+      replaceSkeleton(skM, buildStreamCard({
+        accent:'#fbbf24', sourceIcon:'fa-magnifying-glass', sourceName:'Menções Web', sourceBg:'rgba(251,191,36,.1)', sourceColor:'var(--yellow)',
+        badgeClass:'badge-neutral', badgeText:'OSINT',
+        title:`Buscar menções de ${d.nome}`,
+        desc:'Nenhuma menção pública específica encontrada automaticamente. Utilize o link para pesquisa manual.',
+        fields:[], url:`https://www.google.com/search?q=${encodeURIComponent(d.nome+' '+c)}`, urlLabel:'Buscar no Google',
+      }));
+    }
+    lastData={_modulo:'cnpj',_termo:term,campos:[{k:'CNPJ',v:d.cnpj},{k:'Razão Social',v:d.nome},{k:'Situação',v:d.situacao},{k:'Abertura',v:d.abertura}],status:isActive?'ok':'warn'};
+  },
+
+  /* ── DOMÍNIO ── */
+  dominio: async(term)=>{
+    const d=term.replace(/^https?:\/\//i,'').replace(/\//g,'').toLowerCase().trim();
+    if(!d.includes('.')) throw new Error('Digite um domínio válido (ex: google.com).');
+    const skId='sk-dom-1'; addSkeleton(skId);
+    setStatus('Consultando RDAP/IANA...'); setProgress(20);
+
+    let rdapData=null,dnsData=null,mxData=null,txtData=null;
+    try{
+      const tld=d.split('.').pop();
+      const bs=await fetch('https://data.iana.org/rdap/dns.json');
+      const boot=await bs.json();
+      let rdapBase=null;
+      for(const svc of boot.services){ if(svc[0].includes(tld)){rdapBase=svc[1][0];break;} }
+      if(rdapBase){ const rr=await fetch(`${rdapBase}domain/${d}`); if(rr.ok) rdapData=await rr.json(); }
+    }catch(e){}
+
+    setProgress(45); setStatus('Resolvendo DNS...');
+    try{
+      const dr=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(d)}&type=A`,{headers:{'Accept':'application/dns-json'}});
+      if(dr.ok) dnsData=await dr.json();
+    }catch(e){}
+    try{
+      const mr=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(d)}&type=MX`,{headers:{'Accept':'application/dns-json'}});
+      if(mr.ok) mxData=await mr.json();
+    }catch(e){}
+    try{
+      const tr=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(d)}&type=TXT`,{headers:{'Accept':'application/dns-json'}});
+      if(tr.ok) txtData=await tr.json();
+    }catch(e){}
+
+    setProgress(70); setStatus('Processando dados de registro...');
+    await _delay(200);
+    const registrar=rdapData?.entities?.find(e=>e.roles?.includes('registrar'))?.vcardArray?.[1]?.find(v=>v[0]==='fn')?.[3]||'—';
+    const created=rdapData?.events?.find(e=>e.eventAction==='registration')?.eventDate;
+    const expires=rdapData?.events?.find(e=>e.eventAction==='expiration')?.eventDate;
+    const ns=rdapData?.nameservers?.map(n=>n.ldhName||n.unicodeName).join(', ')||'—';
+    const aRec=dnsData?.Answer?.filter(r=>r.type===1).map(r=>r.data).join(', ')||'Não resolvido';
+    const hasData=!!rdapData;
+
+    replaceSkeleton(skId, buildStreamCard({
+      accent:'#c084fc', sourceIcon:'fa-globe', sourceName:'RDAP · IANA', sourceBg:'rgba(192,132,252,.1)', sourceColor:'var(--purple)',
+      badgeClass:hasData?'badge-ok':'badge-neutral', badgeText:hasData?'✓ Registrado':'RDAP Indisponível',
+      title:`${d} — Dados de Registro`,
+      desc:`Registrador: ${registrar}${created?' · Criado: '+new Date(created).toLocaleDateString('pt-BR'):''}${expires?' · Expira: '+new Date(expires).toLocaleDateString('pt-BR'):''}`,
+      fields:[{k:'Domínio',v:d},{k:'Registrar',v:registrar},{k:'Status',v:rdapData?.status?.join(', ')||'—'},{k:'Nameservers',v:ns}],
+      url:`https://lookup.icann.org/en/lookup?name=${d}`, urlLabel:'Ver no ICANN',
+    }));
+
+    // DNS card
+    await _delay(350);
+    const skId2='sk-dom-2'; addSkeleton(skId2);
+    setStatus('Processando registros DNS...'); setProgress(82);
+    await _delay(250);
+    const mxRec=mxData?.Answer?.map(r=>r.data).join(', ')||'—';
+    const txtRec=txtData?.Answer?.map(r=>r.data).filter(t=>t.startsWith('"')).slice(0,3).join(' | ')||'—';
+    replaceSkeleton(skId2, buildStreamCard({
+      accent:'#22d3ee', sourceIcon:'fa-server', sourceName:'Cloudflare DoH · DNS', sourceBg:'rgba(34,211,238,.1)', sourceColor:'var(--cyan)',
+      badgeClass:aRec!=='Não resolvido'?'badge-ok':'badge-warn', badgeText:aRec!=='Não resolvido'?'✓ DNS Ok':'⚠ Sem A Record',
+      title:`${d} — Registros DNS`,
+      desc:'Registros resolvidos via Cloudflare DNS over HTTPS (DoH)',
+      fields:[{k:'A (IPv4)',v:aRec},{k:'MX (Mail)',v:mxRec},{k:'TXT',v:txtRec.length>80?txtRec.slice(0,80)+'…':txtRec}],
+      url:`https://dnschecker.org/#A/${encodeURIComponent(d)}`, urlLabel:'Ver no DNSChecker',
+    }));
+
+    // AI-powered domain investigation
+    await _delay(300);
+    const skId3='sk-dom-3'; addSkeleton(skId3);
+    setStatus('Buscando informações públicas sobre o domínio (IA)...'); setProgress(90);
+    let domAI = [];
+    try {
+      const domR = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:600,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          system:'Pesquise informações públicas sobre um domínio/site e retorne JSON puro sem markdown. JSON: {"results":[{source,title,summary,url}]}. Máximo 2 resultados.',
+          messages:[{role:'user',content:`Pesquise informações públicas sobre o domínio "${d}": proprietário, empresa, histórico, tecnologias, incidentes de segurança conhecidos, etc. Retorne JSON.`}]
+        })
+      });
+      if(domR.ok){ const domD=await domR.json(); const txt=domD.content?.filter(c=>c.type==='text').map(c=>c.text).join('')||''; try{domAI=JSON.parse(txt.replace(/```json|```/g,'').trim()).results||[];}catch(e){} }
+    } catch(e){}
+    removeSkeleton(skId3);
+    if(domAI.length>0){
+      for(let di=0;di<domAI.length;di++){
+        const dr=domAI[di]; const skD=`sk-dom-ai${di}`; addSkeleton(skD); await _delay(100);
+        replaceSkeleton(skD, buildStreamCard({
+          accent:'#fbbf24', sourceIcon:'fa-magnifying-glass', sourceName:dr.source||'Web', sourceBg:'rgba(251,191,36,.1)', sourceColor:'var(--yellow)',
+          badgeClass:'badge-neutral', badgeText:'OSINT',
+          title:dr.title||d,
+          desc:dr.summary||'Informação pública encontrada',
+          fields:[], url:dr.url||`https://www.shodan.io/search?query=${encodeURIComponent(d)}`, urlLabel:'Ir pra fonte',
+        }));
+      }
+    } else {
+      const skDF='sk-dom-nf'; addSkeleton(skDF); await _delay(100);
+      replaceSkeleton(skDF, buildStreamCard({
+        accent:'#fbbf24', sourceIcon:'fa-server', sourceName:'Shodan · OSINT', sourceBg:'rgba(251,191,36,.1)', sourceColor:'var(--yellow)',
+        badgeClass:'badge-neutral', badgeText:'OSINT',
+        title:`Investigar ${d} em ferramentas públicas`,
+        desc:'Shodan, VirusTotal, ICANN — para análise técnica de segurança e histórico do domínio.',
+        fields:[{k:'Shodan',v:'Serviços expostos'},{k:'VirusTotal',v:'Análise segurança'},{k:'ICANN',v:'Dados de registro'}],
+        url:`https://www.shodan.io/search?query=${encodeURIComponent(d)}`, urlLabel:'Ver no Shodan',
+      }));
+    }
+    lastData={_modulo:'dominio',_termo:term,campos:[{k:'Domínio',v:d},{k:'IP(s)',v:aRec},{k:'Registrar',v:registrar}],status:hasData?'ok':'neutral'};
+  },
+
+  /* ── URL / SITE ── */
+  site: async(term)=>{
+    let target=term.trim();
+    if(!/^https?:\/\//i.test(target)) target='https://'+target;
+    let u; try{ u=new URL(target); }catch{ throw new Error('URL inválida.'); }
+    const hostname=u.hostname;
+
+    const skId='sk-site-1'; addSkeleton(skId);
+    setStatus('Resolvendo DNS do site...'); setProgress(25);
+
+    let ipAddr='—',dnsOk=false;
+    try{
+      const dns=await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,{headers:{'Accept':'application/dns-json'}});
+      const dd=await dns.json();
+      if(dd.Answer?.length){ ipAddr=dd.Answer.filter(r=>r.type===1).map(r=>r.data).join(', '); dnsOk=true; }
+    }catch(e){}
+
+    setProgress(60); setStatus('Analisando configurações...');
+    await _delay(250);
+
+    replaceSkeleton(skId, buildStreamCard({
+      accent:'#4ade80', sourceIcon:'fa-link', sourceName:'DNS · Análise', sourceBg:'rgba(74,222,128,.1)', sourceColor:'var(--green)',
+      badgeClass:dnsOk?'badge-ok':'badge-warn', badgeText:dnsOk?'✓ DNS Ok':'⚠ DNS Falhou',
+      title:`${hostname} — Análise DNS`,
+      desc:`IP(s): ${ipAddr} · HTTPS: ${target.startsWith('https://')?'Ativo':'Não detectado'} · Tecnologias: ${_guesstech(hostname)}`,
+      fields:[{k:'URL',v:target},{k:'Hostname',v:hostname},{k:'IP(s)',v:ipAddr},{k:'TLD',v:'.'+hostname.split('.').pop()},{k:'HTTPS',v:target.startsWith('https://')?'✓ Ativo':'✗ Não'}],
+      url:target, urlLabel:'Abrir site',
+    }));
+
+    // AI-powered site analysis
+    await _delay(300);
+    const skId2='sk-site-2'; addSkeleton(skId2);
+    setStatus('Buscando informações públicas sobre o site (IA)...'); setProgress(82);
+    let siteAI = [];
+    try {
+      const siteR = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:700,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          system:'Pesquise informações públicas sobre um site/URL e retorne JSON puro sem markdown. JSON: {"results":[{source,title,summary,url,type}]}. type pode ser: "info","security","history","review". Máximo 3 resultados REAIS.',
+          messages:[{role:'user',content:`Pesquise informações públicas sobre o site "${hostname}" (URL: ${target}): quem é o dono, empresa responsável, avaliações, possíveis incidentes de segurança conhecidos, o que o site oferece, e outros dados públicos relevantes. Retorne JSON.`}]
+        })
+      });
+      if(siteR.ok){ const sD=await siteR.json(); const txt=sD.content?.filter(c=>c.type==='text').map(c=>c.text).join('')||''; try{siteAI=JSON.parse(txt.replace(/```json|```/g,'').trim()).results||[];}catch(e){} }
+    } catch(e){}
+    removeSkeleton(skId2);
+    if(siteAI.length>0){
+      const typeColors={info:{color:'#22d3ee',bg:'rgba(34,211,238,.1)',icon:'fa-circle-info'},security:{color:'#f87171',bg:'rgba(248,113,113,.1)',icon:'fa-shield-halved'},history:{color:'#c084fc',bg:'rgba(192,132,252,.1)',icon:'fa-clock-rotate-left'},review:{color:'#fbbf24',bg:'rgba(251,191,36,.1)',icon:'fa-star'}};
+      for(let si=0;si<siteAI.length;si++){
+        const sr=siteAI[si]; const tc=typeColors[sr.type]||typeColors.info;
+        const skS=`sk-site-ai${si}`; addSkeleton(skS); await _delay(120);
+        replaceSkeleton(skS, buildStreamCard({
+          accent:tc.color, sourceIcon:tc.icon, sourceName:sr.source||'Web', sourceBg:tc.bg, sourceColor:tc.color,
+          badgeClass:'badge-neutral', badgeText:'Info Pública',
+          title:sr.title||hostname, desc:sr.summary||'Informação pública encontrada',
+          fields:[], url:sr.url||target, urlLabel:'Ir pra fonte',
+        }));
+      }
+    } else {
+      const skSF='sk-site-nf'; addSkeleton(skSF); await _delay(100);
+      replaceSkeleton(skSF, buildStreamCard({
+        accent:'#7c3aed', sourceIcon:'fa-shield-halved', sourceName:'Segurança · OSINT', sourceBg:'rgba(124,58,237,.1)', sourceColor:'#c084fc',
+        badgeClass:'badge-neutral', badgeText:'Links OSINT',
+        title:`Investigar ${hostname}`,
+        desc:'Use ferramentas públicas para análise técnica de segurança, tecnologias e histórico.',
+        fields:[{k:'VirusTotal',v:'Análise de segurança'},{k:'Wayback Machine',v:'Histórico arquivado'},{k:'Shodan',v:'Serviços expostos'}],
+        url:`https://www.virustotal.com/gui/url/${encodeURIComponent(target)}`, urlLabel:'Ver no VirusTotal',
+      }));
+    }
+    lastData={_modulo:'site',_termo:term,campos:[{k:'URL',v:target},{k:'IP',v:ipAddr},{k:'DNS',v:dnsOk?'OK':'Falhou'}],status:dnsOk?'ok':'warn'};
+  },
+
+  /* ── USERNAME ── */
+  username: async(term)=>{
+    const u=term.replace(/^@/,'').trim();
+    if(!u||u.length<2) throw new Error('Username inválido (mínimo 2 caracteres).');
+    if(!/^[a-zA-Z0-9._\-]+$/.test(u)) throw new Error('Username contém caracteres inválidos.');
+
+    const socials=[
+      {name:'GitHub',    icon:'fa-github',    color:'#e2e8f0', url:`https://github.com/${u}`,           apiUrl:`https://api.github.com/users/${u}`,                          type:'github'},
+      {name:'Instagram', icon:'fa-instagram', color:'#e1306c', url:`https://instagram.com/${u}`,        apiUrl:`https://instagram.com/${u}/?__a=1`,                          type:'head'},
+      {name:'Twitter/X', icon:'fa-x-twitter', color:'#1d9bf0', url:`https://x.com/${u}`,               apiUrl:`https://x.com/${u}`,                                         type:'head'},
+      {name:'TikTok',    icon:'fa-tiktok',    color:'#ee1d52', url:`https://tiktok.com/@${u}`,         apiUrl:`https://www.tiktok.com/@${u}`,                               type:'head'},
+      {name:'Reddit',    icon:'fa-reddit',    color:'#ff4500', url:`https://reddit.com/user/${u}`,     apiUrl:`https://www.reddit.com/user/${u}/about.json`,                type:'reddit'},
+      {name:'YouTube',   icon:'fa-youtube',   color:'#ff0000', url:`https://youtube.com/@${u}`,        apiUrl:`https://youtube.com/@${u}`,                                  type:'head'},
+      {name:'LinkedIn',  icon:'fa-linkedin',  color:'#0a66c2', url:`https://linkedin.com/in/${u}`,     apiUrl:`https://linkedin.com/in/${u}`,                               type:'head'},
+      {name:'Twitch',    icon:'fa-twitch',    color:'#9146ff', url:`https://twitch.tv/${u}`,           apiUrl:`https://api.twitch.tv/helix/users?login=${u}`,               type:'head'},
+      {name:'Pinterest', icon:'fa-pinterest', color:'#e60023', url:`https://pinterest.com/${u}`,       apiUrl:`https://pinterest.com/${u}`,                                 type:'head'},
+      {name:'Steam',     icon:'fa-steam',     color:'#c2c2c2', url:`https://steamcommunity.com/id/${u}`, apiUrl:`https://steamcommunity.com/id/${u}`,                      type:'head'},
+      {name:'Dev.to',    icon:'fa-dev',       color:'#4ade80', url:`https://dev.to/${u}`,              apiUrl:`https://dev.to/api/users/by_username?url=${u}`,              type:'devto'},
+      {name:'Keybase',   icon:'fa-key',       color:'#33a0ff', url:`https://keybase.io/${u}`,          apiUrl:`https://keybase.io/_/api/1.0/user/lookup.json?username=${u}`, type:'keybase'},
+    ];
+
+    // Use AI (with web_search) to get real profile data
+    setStatus('Buscando perfis na internet com IA + OSINT...'); setProgress(8);
+    const skAI='sk-usr-ai'; addSkeleton(skAI);
+
+    let aiResults = [];
+    try {
+      const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1200,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          system: 'Você é um motor OSINT especializado. Quando solicitado a buscar informações sobre um username, pesquise ativamente na internet e retorne dados REAIS encontrados. Responda SOMENTE com JSON válido, sem markdown, sem explicações. O JSON deve ter um array "results" com objetos contendo: platform (nome da plataforma), found (boolean), username, displayName (nome real se encontrado), bio (biografia se encontrada), followers (seguidores se encontrado, como string), url (link do perfil), extra (outros dados relevantes como localização, repos, etc). Se não encontrar perfil em uma plataforma, não inclua no array. Só inclua perfis CONFIRMADOS como existentes.',
+          messages:[{role:'user',content:`Pesquise na internet pelo username "@${u}" em redes sociais e plataformas públicas. Busque perfis reais em: GitHub, Instagram, Twitter/X, Reddit, TikTok, YouTube, LinkedIn, Twitch, Pinterest, Steam, Dev.to. Para cada plataforma encontrada com este usuário, extraia dados públicos reais como nome, bio, número de seguidores/repositórios. Retorne apenas JSON.`}]
+        })
+      });
+      if(aiResp.ok){
+        const aiData = await aiResp.json();
+        const text = aiData.content?.filter(c=>c.type==='text').map(c=>c.text).join('') || '';
+        const clean = text.replace(/```json|```/g,'').trim();
+        try { const parsed = JSON.parse(clean); aiResults = parsed.results || []; } catch(e){}
+      }
+    } catch(e){}
+
+    setProgress(55); setStatus('Processando resultados encontrados...');
+    await _delay(200);
+
+    if(aiResults.length > 0){
+      removeSkeleton(skAI);
+      let cardCount = 0;
+      for(const r of aiResults){
+        if(!r.found) continue;
+        const s = socials.find(x=>x.name.toLowerCase().includes(r.platform?.toLowerCase()||'')) || {};
+        const skId=`sk-usr-ai-${cardCount}`; addSkeleton(skId);
+        setStatus(`Exibindo: ${r.platform}...`);
+        setProgress(55 + Math.round((cardCount/aiResults.length)*40));
+        await _delay(180);
+        const fields=[];
+        if(r.displayName && r.displayName!==r.username) fields.push({k:'Nome',v:r.displayName});
+        if(r.bio) fields.push({k:'Bio',v:r.bio.slice(0,120)+(r.bio.length>120?'…':'')});
+        if(r.followers) fields.push({k:'Seguidores/Stats',v:String(r.followers)});
+        if(r.extra) fields.push({k:'Info Extra',v:String(r.extra).slice(0,100)});
+        replaceSkeleton(skId, buildStreamCard({
+          accent: s.color||'#22d3ee',
+          sourceIcon: s.icon||'fa-user',
+          sourceName: r.platform,
+          sourceBg: `${(s.color||'#22d3ee')}22`,
+          sourceColor: s.color||'#22d3ee',
+          badgeClass:'badge-ok', badgeText:'✓ Perfil Encontrado',
+          title:`@${r.username||u} — ${r.platform}`,
+          desc: r.bio || r.displayName || 'Perfil público encontrado',
+          fields,
+          url: r.url || s.url || '',
+          urlLabel:'Ir pra fonte',
+        }));
+        cardCount++;
+      }
+      // If AI found nothing useful
+      if(cardCount === 0){
+        replaceSkeleton(skAI, buildStreamCard({
+          accent:'#94a3b8', sourceIcon:'fa-user-slash', sourceName:'OSINT Username', sourceBg:'rgba(148,163,184,.1)', sourceColor:'#94a3b8',
+          badgeClass:'badge-neutral', badgeText:'Não encontrado',
+          title:`@${u} — Nenhum perfil público encontrado`,
+          desc:'Não foram encontrados perfis públicos ativos com este username nas principais plataformas.',
+          fields:[{k:'Username buscado',v:'@'+u}],
+          url:'', urlLabel:'',
+        }));
+      }
+    } else {
+      // Fallback: GitHub API (funciona sem autenticação para dados básicos)
+      removeSkeleton(skAI);
+      let ghFound = false;
+      try {
+        const ghR = await fetch(`https://api.github.com/users/${encodeURIComponent(u)}`);
+        if(ghR.ok){
+          const gh = await ghR.json();
+          ghFound = true;
+          const skGH='sk-usr-gh'; addSkeleton(skGH);
+          setStatus('GitHub encontrado!'); setProgress(70);
+          await _delay(150);
+          replaceSkeleton(skGH, buildStreamCard({
+            accent:'#e2e8f0', sourceIcon:'fa-github', sourceName:'GitHub', sourceBg:'rgba(226,232,240,.1)', sourceColor:'#e2e8f0',
+            badgeClass:'badge-ok', badgeText:'✓ Encontrado',
+            title:`${gh.name||('@'+u)} — GitHub`,
+            desc: gh.bio||'Usuário GitHub público',
+            fields:[
+              {k:'Username',v:'@'+gh.login},
+              ...(gh.name?[{k:'Nome',v:gh.name}]:[]),
+              {k:'Repositórios',v:String(gh.public_repos||0)},
+              {k:'Seguidores',v:String(gh.followers||0)},
+              ...(gh.company?[{k:'Empresa',v:gh.company}]:[]),
+              ...(gh.location?[{k:'Localização',v:gh.location}]:[]),
+              ...(gh.blog?[{k:'Site',v:gh.blog}]:[]),
+            ],
+            url:`https://github.com/${u}`, urlLabel:'Ver no GitHub',
+          }));
+        }
+      } catch(e){}
+
+      // Reddit API
+      try {
+        const rdR = await fetch(`https://www.reddit.com/user/${encodeURIComponent(u)}/about.json`);
+        if(rdR.ok){
+          const rd = await rdR.json();
+          if(rd.data && !rd.data.is_suspended){
+            const skRD='sk-usr-rd'; addSkeleton(skRD);
+            setStatus('Reddit encontrado!'); setProgress(80);
+            await _delay(150);
+            const karma = (rd.data.link_karma||0)+(rd.data.comment_karma||0);
+            replaceSkeleton(skRD, buildStreamCard({
+              accent:'#ff4500', sourceIcon:'fa-reddit', sourceName:'Reddit', sourceBg:'rgba(255,69,0,.1)', sourceColor:'#ff4500',
+              badgeClass:'badge-ok', badgeText:'✓ Encontrado',
+              title:`u/${u} — Reddit`,
+              desc:`Karma total: ${karma.toLocaleString('pt-BR')} · Conta criada em ${new Date(rd.data.created_utc*1000).toLocaleDateString('pt-BR')}`,
+              fields:[
+                {k:'Username',v:'u/'+u},
+                {k:'Karma total',v:karma.toLocaleString('pt-BR')},
+                {k:'Post Karma',v:(rd.data.link_karma||0).toLocaleString('pt-BR')},
+                {k:'Comment Karma',v:(rd.data.comment_karma||0).toLocaleString('pt-BR')},
+                {k:'Conta criada',v:new Date(rd.data.created_utc*1000).toLocaleDateString('pt-BR')},
+                {k:'Gold',v:rd.data.is_gold?'Sim':'Não'},
+              ],
+              url:`https://reddit.com/user/${u}`, urlLabel:'Ver no Reddit',
+            }));
+            ghFound = true;
+          }
+        }
+      } catch(e){}
+
+      // Dev.to API
+      try {
+        const dvR = await fetch(`https://dev.to/api/users/by_username?url=${encodeURIComponent(u)}`);
+        if(dvR.ok){
+          const dv = await dvR.json();
+          if(dv.id){
+            const skDV='sk-usr-dv'; addSkeleton(skDV);
+            setProgress(88); await _delay(150);
+            replaceSkeleton(skDV, buildStreamCard({
+              accent:'#4ade80', sourceIcon:'fa-dev', sourceName:'Dev.to', sourceBg:'rgba(74,222,128,.1)', sourceColor:'#4ade80',
+              badgeClass:'badge-ok', badgeText:'✓ Encontrado',
+              title:`${dv.name||('@'+u)} — Dev.to`,
+              desc: dv.summary||'Desenvolvedor na plataforma Dev.to',
+              fields:[
+                {k:'Nome',v:dv.name||'—'},
+                {k:'Username',v:'@'+u},
+                {k:'Seguidores',v:String(dv.followers_count||0)},
+                ...(dv.location?[{k:'Localização',v:dv.location}]:[]),
+                ...(dv.github_username?[{k:'GitHub',v:'@'+dv.github_username}]:[]),
+                {k:'Artigos publicados',v:String(dv.articles_count||0)},
+              ],
+              url:`https://dev.to/${u}`, urlLabel:'Ver no Dev.to',
+            }));
+            ghFound = true;
+          }
+        }
+      } catch(e){}
+
+      if(!ghFound){
+        const skNF='sk-usr-nf'; addSkeleton(skNF);
+        await _delay(200);
+        replaceSkeleton(skNF, buildStreamCard({
+          accent:'#94a3b8', sourceIcon:'fa-user-slash', sourceName:'OSINT Username', sourceBg:'rgba(148,163,184,.1)', sourceColor:'#94a3b8',
+          badgeClass:'badge-neutral', badgeText:'Não encontrado',
+          title:`@${u} — Nenhum perfil público encontrado`,
+          desc:'Não foram encontrados perfis públicos com APIs abertas. Tente verificar manualmente as plataformas.',
+          fields:[{k:'Username buscado',v:'@'+u}],
+          url:`https://www.google.com/search?q=${encodeURIComponent('@'+u+' site:instagram.com OR site:twitter.com OR site:github.com')}`, urlLabel:'Buscar no Google',
+        }));
+      }
+    }
+
+    setProgress(100);
+    lastData={_modulo:'username',_termo:term,campos:[{k:'Username',v:'@'+u},{k:'Status',v:'Consulta OSINT realizada'}],status:'neutral'};
+  },
+
+  /* ── TERMO ── */
+  termo: async(term)=>{
+    if(!term.trim()) throw new Error('Digite um termo para buscar.');
+
+    setStatus('Buscando na internet com IA + web search...'); setProgress(10);
+    const skAI='sk-termo-ai'; addSkeleton(skAI);
+
+    let aiResults = [];
+    try {
+      const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:2000,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          system: 'Você é um motor OSINT especializado em fontes abertas. Pesquise ativamente na internet sobre o termo fornecido e retorne dados REAIS encontrados. Responda SOMENTE com JSON válido, sem markdown, sem explicações extras. O JSON deve ter um array "results" onde cada objeto tem: source (nome da fonte/site), title (título do resultado), summary (resumo REAL do conteúdo encontrado, 1-3 frases informativas), url (link original), type (tipo: "social", "news", "forum", "site", "doc", "gov" etc), relevance (0-100). Inclua apenas resultados com conteúdo relevante e REAL. Máximo 8 resultados mais relevantes.',
+          messages:[{role:'user',content:`Faça uma busca OSINT abrangente sobre: "${term}". Pesquise em fontes diversas: notícias, redes sociais, fóruns, sites públicos, registros públicos, e qualquer menção pública. Extraia dados reais e informativos sobre este termo. Retorne JSON.`}]
+        })
+      });
+      if(aiResp.ok){
+        const aiData = await aiResp.json();
+        const text = aiData.content?.filter(c=>c.type==='text').map(c=>c.text).join('') || '';
+        const clean = text.replace(/```json|```/g,'').trim();
+        try { const parsed = JSON.parse(clean); aiResults = parsed.results || []; } catch(e){}
+      }
+    } catch(e){}
+
+    setProgress(70); setStatus('Organizando resultados encontrados...');
+    await _delay(200);
+    removeSkeleton(skAI);
+
+    const typeConfig={
+      social:{icon:'fa-users',color:'#60a5fa',bg:'rgba(96,165,250,.1)',label:'Rede Social'},
+      news:{icon:'fa-newspaper',color:'#4ade80',bg:'rgba(74,222,128,.1)',label:'Notícia'},
+      forum:{icon:'fa-comments',color:'#fbbf24',bg:'rgba(251,191,36,.1)',label:'Fórum'},
+      site:{icon:'fa-globe',color:'#22d3ee',bg:'rgba(34,211,238,.1)',label:'Site'},
+      doc:{icon:'fa-file-lines',color:'#c084fc',bg:'rgba(192,132,252,.1)',label:'Documento'},
+      gov:{icon:'fa-building-columns',color:'#f97316',bg:'rgba(249,115,22,.1)',label:'Gov/Oficial'},
+    };
+
+    if(aiResults.length > 0){
+      let idx=0;
+      for(const r of aiResults){
+        const tc = typeConfig[r.type] || typeConfig.site;
+        const skId=`sk-termo-r-${idx}`; addSkeleton(skId);
+        setProgress(70 + Math.round((idx/aiResults.length)*28));
+        setStatus(`Exibindo resultado ${idx+1} de ${aiResults.length}...`);
+        await _delay(160);
+        replaceSkeleton(skId, buildStreamCard({
+          accent: tc.color,
+          sourceIcon: tc.icon,
+          sourceName: r.source||'Web',
+          sourceBg: tc.bg,
+          sourceColor: tc.color,
+          badgeClass:'badge-ok', badgeText:'✓ '+tc.label,
+          title: r.title||term,
+          desc: r.summary||'Resultado encontrado na busca pública.',
+          fields:[],
+          url: r.url||'',
+          urlLabel:'Ir pra fonte',
+        }));
+        idx++;
+      }
+    } else {
+      // Fallback: show "not found" + google link
+      const skNF='sk-termo-nf'; addSkeleton(skNF);
+      await _delay(200);
+      replaceSkeleton(skNF, buildStreamCard({
+        accent:'#94a3b8', sourceIcon:'fa-satellite-dish', sourceName:'OSINT Termo Livre', sourceBg:'rgba(148,163,184,.1)', sourceColor:'#94a3b8',
+        badgeClass:'badge-neutral', badgeText:'Sem resultados',
+        title:`Nenhum resultado público encontrado para: ${term}`,
+        desc:'Não foram encontradas menções públicas relevantes sobre este termo na internet.',
+        fields:[{k:'Termo buscado',v:term}],
+        url:`https://www.google.com/search?q=${encodeURIComponent(term)}`, urlLabel:'Buscar no Google',
+      }));
+    }
+
+    setProgress(100);
+    lastData={_modulo:'termo',_termo:term,campos:[{k:'Termo',v:term},{k:'Resultados',v:String(aiResults.length)}],status:aiResults.length>0?'ok':'neutral'};
+  },
+
+  /* ── IP ── */
+  ip: async(term)=>{
+    const ip=term.trim();
+    if(!/^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$/.test(ip)) throw new Error('IP inválido. Use formato IPv4 (1.2.3.4) ou IPv6.');
+
+    const skId='sk-ip-1'; addSkeleton(skId);
+    setStatus('Consultando ipapi.co...'); setProgress(20);
+    let d=null;
+    try{
+      const r=await fetch(`https://ipapi.co/${ip}/json/`);
+      if(r.ok) d=await r.json();
+    }catch(e){}
+
+    if(d&&!d.error){
+      setProgress(65); setStatus('Processando geolocalização...'); await _delay(220);
+      replaceSkeleton(skId, buildStreamCard({
+        accent:'#0f766e', sourceIcon:'fa-network-wired', sourceName:'ipapi.co', sourceBg:'rgba(15,118,110,.15)', sourceColor:'#14b8a6',
+        badgeClass:'badge-ok', badgeText:'✓ Encontrado',
+        title:`${ip} — ${d.city||'—'}, ${d.country_name||'—'}`,
+        desc:`AS${d.asn||'?'} · ${d.org||'—'} · ${d.isp||'—'}`,
+        fields:[{k:'IP',v:ip},{k:'País',v:`${d.country_name||'—'} (${d.country||'—'})`},{k:'Cidade',v:d.city||'—'},{k:'Região',v:d.region||'—'},{k:'ASN',v:`AS${d.asn||'?'}`},{k:'Org',v:d.org||'—'},{k:'Timezone',v:d.timezone||'—'},{k:'Lat/Long',v:d.latitude&&d.longitude?`${d.latitude}, ${d.longitude}`:'—'}],
+        url:`https://ipapi.co/${ip}`, urlLabel:'Ver em ipapi.co',
+      }));
+
+      // Map
+      if(d.latitude&&d.longitude){
+        await _delay(300);
+        const skId2='sk-ip-2'; addSkeleton(skId2);
+        setStatus('Gerando mapa...'); setProgress(80);
+        await _delay(250);
+        replaceSkeleton(skId2, buildStreamCard({
+          accent:'#4ade80', sourceIcon:'fa-map', sourceName:'Google Maps', sourceBg:'rgba(74,222,128,.1)', sourceColor:'var(--green)',
+          badgeClass:'badge-neutral', badgeText:'Localização',
+          title:'Ver localização no mapa',
+          desc:`Coordenadas: ${d.latitude}, ${d.longitude} — ${d.city||''}, ${d.country_name||''}`,
+          fields:[],
+          url:`https://www.google.com/maps?q=${d.latitude},${d.longitude}`, urlLabel:'Abrir no Maps',
+        }));
+      }
+    } else {
+      removeSkeleton(skId);
+    }
+
+    // Shodan
+    await _delay(300);
+    const skId3='sk-ip-3'; addSkeleton(skId3);
+    setStatus('Gerando links OSINT...'); setProgress(90);
+    await _delay(250);
+    // Try AbuseIPDB for reputation data
+    let abuseScore = null;
+    try {
+      const abR = await fetch(`https://api.abuseipdb.com/api/v2/check?ipAddress=${encodeURIComponent(ip)}&maxAgeInDays=90`,{headers:{'Key':'','Accept':'application/json'}});
+      // This will fail without API key, but try anyway
+    } catch(e){}
+    replaceSkeleton(skId3, buildStreamCard({
+      accent:'#f87171', sourceIcon:'fa-server', sourceName:'Shodan · AbuseIPDB · OSINT', sourceBg:'rgba(248,113,113,.1)', sourceColor:'var(--red)',
+      badgeClass:'badge-neutral', badgeText:'OSINT',
+      title:`Investigar ${ip} em segurança`,
+      desc:'Verifique serviços expostos (Shodan), reputação (AbuseIPDB) e análise de malware (VirusTotal) deste IP.',
+      fields:[{k:'Shodan',v:'Serviços e portas abertas'},{k:'AbuseIPDB',v:'Histórico de abuso/spam'},{k:'VirusTotal',v:'Reputação e análise'}],
+      url:`https://www.shodan.io/host/${ip}`, urlLabel:'Ver no Shodan',
+    }));
+    lastData={_modulo:'ip',_termo:term,campos:[{k:'IP',v:ip},{k:'País',v:d?.country_name||'—'},{k:'Org',v:d?.org||'—'}],status:d&&!d.error?'ok':'neutral'};
+  },
+};
+
+/* ═══════════ ADMIN ═══════════ */
+function loadAdmin(){
+  const users=S.getUsers(),logs=S.getLogs();
+  document.getElementById('st-users').textContent=users.length;
+  document.getElementById('st-searches').textContent=logs.length;
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('st-today').textContent=logs.filter(l=>l.ts&&l.ts.startsWith(today)).length;
+  renderUsersTable(users);
+  renderUserSelect(users);
+  renderLogsTable(logs);
+}
+
+function fmtDate(iso){ try{return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return iso||'—';} }
+
+function renderUsersTable(users){
+  const tb=document.getElementById('users-tbody');
+  if(!users.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><i class="fas fa-users-slash"></i><p>Nenhum usuário</p></div></td></tr>';return;}
+  tb.innerHTML=users.map(u=>{
+    const totalConsultas=S.getLogs().filter(l=>l.user===u.username).length;
+    return `<tr>
+      <td class="td-user">@${_esc(u.username)}</td>
+      <td><span class="chip chip-${(u.plano||'Bronze').toLowerCase()}">${u.plano||'Bronze'}</span></td>
+      <td>${totalConsultas}</td>
+      <td class="td-date">${fmtDate(u.dataCriacao)}</td>
+      <td><button class="btn-sm danger" onclick="delUser('${u.id}')"><i class="fas fa-trash"></i> Excluir</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUserSelect(users){
+  const s=document.getElementById('plan-user-sel');
+  s.innerHTML='<option value="">Selecione...</option>'+users.map(u=>`<option value="${u.id}">@${_esc(u.username)} (${u.plano})</option>`).join('');
+}
+
+function renderLogsTable(logs){
+  const tb=document.getElementById('logs-tbody');
+  if(!logs.length){tb.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="fas fa-scroll"></i><p>Sem logs</p></div></td></tr>';return;}
+  tb.innerHTML=[...logs].reverse().map(l=>`
+    <tr>
+      <td class="td-user">@${_esc(l.user||'')}</td>
+      <td>${_esc(l.mod||'—')}</td>
+      <td>${_esc(l.termo||'—')}</td>
+      <td class="td-date">${fmtDate(l.ts)}</td>
+    </tr>`).join('');
+}
+
+document.getElementById('btn-create-user').addEventListener('click',async()=>{
+  const username=document.getElementById('new-user').value.trim().toLowerCase();
+  const password=document.getElementById('new-pass').value;
+  const plan=document.getElementById('new-plan').value;
+  hideAlert('create-alert');
+  if(!username||!password){showAlert('create-alert','Preencha todos os campos.','error');return;}
+  if(username===ADMIN_USER){showAlert('create-alert','Nome reservado.','error');return;}
+  if(!/^[a-z0-9_]{3,20}$/.test(username)){showAlert('create-alert','Usuário: 3-20 chars (letras, números, _).','error');return;}
+  if(password.length<4){showAlert('create-alert','Senha mínima: 4 caracteres.','error');return;}
+  const users=S.getUsers();
+  if(users.find(u=>u.username===username)){showAlert('create-alert','Usuário já existe.','error');return;}
+  const senhaHash=await sha256(password);
+  users.push({id:crypto.randomUUID(),username,senhaHash,pinHash:null,plano:plan,dataCriacao:new Date().toISOString()});
+  S.saveUsers(users);
+  document.getElementById('new-user').value=''; document.getElementById('new-pass').value='';
+  showAlert('create-alert',`@${username} criado com plano ${plan}.`,'success');
+  toast(`Usuário @${username} criado!`,'success');
+  loadAdmin();
+});
+
+function delUser(id){
+  const users=S.getUsers(),u=users.find(x=>x.id===id);
+  if(!u||!confirm(`Excluir permanentemente @${u.username}?`)) return;
+  S.saveUsers(users.filter(x=>x.id!==id));
+  toast(`@${u.username} excluído.`,'info');
+  loadAdmin();
+}
+
+document.getElementById('btn-upd-plan').addEventListener('click',()=>{
+  const uid=document.getElementById('plan-user-sel').value;
+  const plan=document.getElementById('plan-new-val').value;
+  hideAlert('plan-alert');
+  if(!uid){showAlert('plan-alert','Selecione um usuário.','error');return;}
+  const users=S.getUsers(),i=users.findIndex(u=>u.id===uid);
+  if(i<0){showAlert('plan-alert','Usuário não encontrado.','error');return;}
+  users[i].plano=plan; S.saveUsers(users);
+  showAlert('plan-alert',`Plano de @${users[i].username} → ${plan}.`,'success');
+  toast('Plano atualizado!','success'); loadAdmin();
+});
+
+document.getElementById('btn-clear-logs').addEventListener('click',()=>{
+  if(!confirm('Limpar todos os logs?')) return;
+  S.saveLogs([]); toast('Logs limpos.','info'); loadAdmin();
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    loadAdmin();
+  });
+});
+
+/* ═══════════ INIT ═══════════ */
+(function init(){
+  const session=S.getSession();
+  if(!session){showScreen('login');return;}
+  if(session.isAdmin){loadAdmin();showScreen('admin');}
+  else{
+    const user=S.getUsers().find(u=>u.username===session.username);
+    currentUser=session.username; currentPlan=user?.plano||'Bronze';
+    loadDash(); showScreen('dash');
+  }
+})();
+</script>
 </body>
 </html>
