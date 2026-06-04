@@ -461,7 +461,7 @@ tbody tr:hover td{background:rgba(255,255,255,.03)}
    ══════════════════════════════════════════════════════════════ */
 
 // URL do backend próprio — variável de build/deploy, não segredo
-const API = '';
+const API = window.__API_BASE__ || '';
 
 /* ═══ STATE — em memória, sem localStorage ═══ */
 let _jwt         = null;   // Token JWT (em memória, some ao fechar a aba)
@@ -513,11 +513,7 @@ async function apiCall(method, path, body = null, requiresCsrf = false) {
 }
 
 async function refreshCsrf() {
-  if (!_jwt) return;
-  try {
-    const { csrfToken } = await apiCall('GET', '/api/csrf');
-    _csrfToken = csrfToken;
-  } catch {}
+  // CSRF endpoint não existe — usando apenas JWT para autenticação
 }
 
 /* ═══ TOAST ═══ */
@@ -926,7 +922,7 @@ async function doApiConsult(term) {
     addSkeleton(skId);
     setProgress(40);
 
-    const data = await apiCall('POST', `/api/modulos/${m.id}`, { termo: term });
+    const data = await apiCall('POST', '/api/modulos', { tipo: m.id, termo: term });
     setProgress(80); await _delay(200);
     removeSkeleton(skId);
 
@@ -1168,7 +1164,7 @@ document.getElementById('btn-upd-plan').addEventListener('click', async () => {
   hideAlert('plan-alert');
   if (!uid) { showAlert('plan-alert', 'Selecione um usuário.', 'error'); return; }
   try {
-    await apiCall('PUT', `/api/admin/users/${encodeURIComponent(uid)}/plano`, { plano }, true); // CSRF
+    await apiCall('PUT', `/api/admin/users/${encodeURIComponent(uid)}`, { plano }, true); // CSRF
     showAlert('plan-alert', 'Plano atualizado!', 'success');
     toast('Plano atualizado!', 'success');
     await loadAdmin();
@@ -1209,3 +1205,4 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 </script>
 </body>
 </html>
+
